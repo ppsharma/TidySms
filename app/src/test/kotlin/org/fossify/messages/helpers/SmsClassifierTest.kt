@@ -11,26 +11,37 @@ class SmsClassifierTest {
         assertEquals(SmsClassifier.Category.TRANSACTIONS, result.category)
         assertTrue(result.confidence >= 0.65f)
     }
+
     @Test fun upiCreditAlertIsTransaction() {
         val result = SmsClassifier.classify("Rs. 750 credited to your account through UPI. Transaction reference 123456.")
         assertEquals(SmsClassifier.Category.TRANSACTIONS, result.category)
     }
+
     @Test fun shoppingOfferIsPromotion() {
         val result = SmsClassifier.classify("Mega sale! Get 50% discount on selected products. Shop now.")
         assertEquals(SmsClassifier.Category.PROMOTIONS, result.category)
     }
+
     @Test fun couponMessageIsPromotion() {
         val result = SmsClassifier.classify("Use coupon SAVE20 for an exclusive deal. Limited time offer.")
         assertEquals(SmsClassifier.Category.PROMOTIONS, result.category)
     }
+
     @Test fun ordinaryPersonalMessageIsPersonal() {
         val result = SmsClassifier.classify("Hey, are we still meeting for dinner tonight?")
         assertEquals(SmsClassifier.Category.PERSONAL, result.category)
     }
-    @Test fun ambiguousMessageIsUncategorised() {
+
+    @Test fun genericThankYouIsUncategorised() {
         val result = SmsClassifier.classify("Thank you. Your request has been received.")
         assertEquals(SmsClassifier.Category.UNCATEGORISED, result.category)
     }
+
+    @Test fun greetingAloneIsUncategorised() {
+        val result = SmsClassifier.classify("Hello.")
+        assertEquals(SmsClassifier.Category.UNCATEGORISED, result.category)
+    }
+
     @Test fun emptyMessageIsUncategorised() {
         val result = SmsClassifier.classify("   ")
         assertEquals(SmsClassifier.Category.UNCATEGORISED, result.category)

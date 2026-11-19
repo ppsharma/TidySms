@@ -27,7 +27,7 @@ object SmsClassifier {
         "greeting" to Regex("\\b(hi|hello|hey|good morning|good evening)\\b", RegexOption.IGNORE_CASE),
         "personal question" to Regex("\\b(how are you|are you free|what time|where are you|shall we|are we)\\b", RegexOption.IGNORE_CASE),
         "personal plans" to Regex("\\b(see you|meet you|coming over|reached home|on my way|dinner|lunch)\\b", RegexOption.IGNORE_CASE),
-        "personal thanks" to Regex("\\b(thanks|thank you|sorry|miss you|call me)\\b", RegexOption.IGNORE_CASE)
+        "personal contact" to Regex("\\b(miss you|call me)\\b", RegexOption.IGNORE_CASE)
     )
 
     fun classify(body: String): Classification {
@@ -36,12 +36,14 @@ object SmsClassifier {
         val transactions = transactionSignals.filter { it.second.containsMatchIn(text) }.map { it.first }
         val promotions = promotionSignals.filter { it.second.containsMatchIn(text) }.map { it.first }
         val personal = personalSignals.filter { it.second.containsMatchIn(text) }.map { it.first }
+        val hasPersonalContext = personal.contains("personal question") ||
+            personal.contains("personal plans") || personal.size >= 2
         return when {
             transactions.size >= 2 && transactions.size > promotions.size ->
                 Classification(Category.TRANSACTIONS, confidence(transactions.size, promotions.size), transactions)
             promotions.size >= 2 && promotions.size > transactions.size ->
                 Classification(Category.PROMOTIONS, confidence(promotions.size, transactions.size), promotions)
-            personal.isNotEmpty() && transactions.isEmpty() && promotions.isEmpty() ->
+            hasPersonalContext && transactions.isEmpty() && promotions.isEmpty() ->
                 Classification(Category.PERSONAL, (0.68f + personal.size * 0.06f).coerceAtMost(0.9f), personal)
             else -> Classification(Category.UNCATEGORISED, 0.35f, emptyList())
         }
