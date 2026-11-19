@@ -5,6 +5,8 @@ import android.app.role.RoleManager
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
@@ -86,6 +88,7 @@ class MainActivity : SimpleActivity() {
     private var bus: EventBus? = null
     private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
     private var latestConversations = arrayListOf<Conversation>()
+    private var hasLoadedConversations = false
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -127,6 +130,10 @@ class MainActivity : SimpleActivity() {
         }
 
         updateTextColors(binding.mainCoordinator)
+        updateInboxCategoryStyles()
+        if (hasLoadedConversations) {
+            showFilteredConversations()
+        }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())
 
         val properPrimaryColor = getProperPrimaryColor()
@@ -300,8 +307,10 @@ class MainActivity : SimpleActivity() {
                 else -> null
             }
             config.selectedInboxCategory = selectedCategory?.name ?: "ALL"
+            updateInboxCategoryStyles()
             showFilteredConversations()
         }
+        updateInboxCategoryStyles()
         getCachedConversations()
         binding.noConversationsPlaceholder2.setOnClickListener {
             launchNewConversation()
@@ -430,6 +439,7 @@ class MainActivity : SimpleActivity() {
         cached: Boolean = false,
     ) {
         latestConversations = ArrayList(conversations)
+        hasLoadedConversations = true
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the
             // loading placeholder and progress until we are done loading from telephony
@@ -442,6 +452,32 @@ class MainActivity : SimpleActivity() {
         try {
             showFilteredConversations(updatePlaceholder = !cached)
         } catch (_: Exception) {
+        }
+    }
+
+
+    private fun updateInboxCategoryStyles() {
+        val primaryColor = getProperPrimaryColor()
+        val textColor = getProperTextColor()
+        val backgroundColor = getProperBackgroundColor()
+        val density = resources.displayMetrics.density
+        val cornerRadius = 18f * density
+
+        for (index in 0 until binding.inboxCategoryGroup.childCount) {
+            val button = binding.inboxCategoryGroup.getChildAt(index) as? android.widget.RadioButton
+                ?: continue
+            val isSelected = button.isChecked
+            button.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setCornerRadius(cornerRadius)
+                setColor(if (isSelected) primaryColor else backgroundColor)
+                setStroke(
+                    (density).toInt().coerceAtLeast(1),
+                    if (isSelected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA)
+                )
+            }
+            button.setTextColor(if (isSelected) Color.WHITE else textColor)
+            button.alpha = if (isSelected) 1f else 0.88f
         }
     }
 
