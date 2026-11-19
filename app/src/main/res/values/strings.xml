@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="sender_category">Message category</string>
+    <string name="category_automatic">Automatic</string>
+    <string name="category_manual">Manual</string>
+    <string name="sender_category_value">%1$s · %2$s</string>
     <string name="category_transactions">Transactions</string>
     <string name="category_promotions">Promotions</string>
     <string name="category_personal">Personal</string>

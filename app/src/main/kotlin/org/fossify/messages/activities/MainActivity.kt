@@ -450,7 +450,8 @@ class MainActivity : SimpleActivity() {
             .filter { conversation ->
                 val category = selectedCategory
                 category == null ||
-                    SmsClassifier.classify(conversation.snippet).category == category
+                    (config.getManualCategoryForSender(conversation.phoneNumber)
+                        ?: SmsClassifier.classify(conversation.snippet).category) == category
             }
             .sortedWith(
                 compareByDescending<Conversation> {
