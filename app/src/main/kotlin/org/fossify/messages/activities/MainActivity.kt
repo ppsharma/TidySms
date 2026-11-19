@@ -456,6 +456,7 @@ class MainActivity : SimpleActivity() {
     }
 
 
+    @Suppress("MagicNumber")
     private fun updateInboxCategoryStyles() {
         val primaryColor = getProperPrimaryColor()
         val textColor = getProperTextColor()
