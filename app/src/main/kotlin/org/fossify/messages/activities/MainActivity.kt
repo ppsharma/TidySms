@@ -63,6 +63,7 @@ import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getMessages
 import org.fossify.messages.extensions.insertOrUpdateConversation
 import org.fossify.messages.extensions.messagesDB
+import org.fossify.messages.helpers.SmsClassifier
 import org.fossify.messages.helpers.SEARCHED_MESSAGE_ID
 import org.fossify.messages.helpers.THREAD_ID
 import org.fossify.messages.helpers.THREAD_TITLE
@@ -83,6 +84,8 @@ class MainActivity : SimpleActivity() {
     private var storedFontSize = 0
     private var lastSearchedText = ""
     private var bus: EventBus? = null
+    private var selectedCategory: SmsClassifier.Category? = null
+    private var latestConversations = arrayListOf<Conversation>()
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -276,6 +279,15 @@ class MainActivity : SimpleActivity() {
     private fun initMessenger() {
         checkWhatsNewDialog()
         storeStateVariables()
+        binding.inboxCategoryGroup.setOnCheckedChangeListener { _, checkedId ->
+            selectedCategory = when (checkedId) {
+                R.id.category_personal -> SmsClassifier.Category.PERSONAL
+                R.id.category_transactions -> SmsClassifier.Category.TRANSACTIONS
+                R.id.category_promotions -> SmsClassifier.Category.PROMOTIONS
+                else -> null
+            }
+            showFilteredConversations()
+        }
         getCachedConversations()
         binding.noConversationsPlaceholder2.setOnClickListener {
             launchNewConversation()
@@ -403,13 +415,7 @@ class MainActivity : SimpleActivity() {
         conversations: ArrayList<Conversation>,
         cached: Boolean = false,
     ) {
-        val sortedConversations = conversations
-            .sortedWith(
-                compareByDescending<Conversation> {
-                    config.pinnedConversations.contains(it.threadId.toString())
-                }.thenByDescending { it.date }
-            ).toMutableList() as ArrayList<Conversation>
-
+        latestConversations = ArrayList(conversations)
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the
             // loading placeholder and progress until we are done loading from telephony
@@ -429,6 +435,24 @@ class MainActivity : SimpleActivity() {
             }
         } catch (_: Exception) {
         }
+    }
+
+    private fun showFilteredConversations() {
+        val sortedConversations = latestConversations
+            .filter { conversation ->
+                val category = selectedCategory
+                category == null || SmsClassifier.classify(conversation.snippet).category == category
+            }
+            .sortedWith(
+                compareByDescending<Conversation> {
+                    config.pinnedConversations.contains(it.threadId.toString())
+                }.thenByDescending { it.date }
+            ) as ArrayList<Conversation>
+
+        getOrCreateConversationsAdapter().updateConversations(sortedConversations) {
+            showOrHidePlaceholder(sortedConversations.isEmpty())
+        }
+        showOrHidePlaceholder(sortedConversations.isEmpty())
     }
 
     private fun showOrHideProgress(show: Boolean) {
