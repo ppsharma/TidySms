@@ -426,13 +426,7 @@ class MainActivity : SimpleActivity() {
         }
 
         try {
-            getOrCreateConversationsAdapter().apply {
-                updateConversations(sortedConversations) {
-                    if (!cached) {
-                        showOrHidePlaceholder(currentList.isEmpty())
-                    }
-                }
-            }
+            showFilteredConversations()
         } catch (_: Exception) {
         }
     }
@@ -441,7 +435,8 @@ class MainActivity : SimpleActivity() {
         val sortedConversations = latestConversations
             .filter { conversation ->
                 val category = selectedCategory
-                category == null || SmsClassifier.classify(conversation.snippet).category == category
+                category == null ||
+                    SmsClassifier.classify(conversation.snippet).category == category
             }
             .sortedWith(
                 compareByDescending<Conversation> {
