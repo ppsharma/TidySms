@@ -40,11 +40,6 @@ object SmsClassifier {
         "promotional call-to-action" to Regex("\\b(book now|order now|click here|download the app)\\b", RegexOption.IGNORE_CASE)
     )
 
-    private val serviceSender = Regex(
-        "^(?:[A-Z]{2,3}-)?[A-Z0-9]{4,10}(?:-[A-Z])?$",
-        RegexOption.IGNORE_CASE
-    )
-
     fun classify(sender: String?, body: String): Classification {
         val text = body.trim()
         if (text.isEmpty()) return Classification(Category.PERSONAL, 0.35f, emptyList())
@@ -56,13 +51,11 @@ object SmsClassifier {
             .filter { (_, pattern) -> pattern.containsMatchIn(text) }
             .map { it.first }
 
-        var transactionScore = transactionMatches.size
-        var promotionScore = promotionMatches.size
-
-        if (!sender.isNullOrBlank() && serviceSender.matches(sender.trim())) {
-            if (transactionMatches.isNotEmpty()) transactionScore += 1
-            if (promotionMatches.isNotEmpty()) promotionScore += 1
-        }
+        // Sender IDs alone are not reliable evidence: generic labels such as
+        // UNKNOWN can resemble Indian alphanumeric SMS headers. Only message
+        // content contributes to a category decision.
+        val transactionScore = transactionMatches.size
+        val promotionScore = promotionMatches.size
 
         return when {
             transactionScore >= 2 && transactionScore > promotionScore ->
