@@ -426,12 +426,12 @@ class MainActivity : SimpleActivity() {
         }
 
         try {
-            showFilteredConversations()
+            showFilteredConversations(updatePlaceholder = !cached)
         } catch (_: Exception) {
         }
     }
 
-    private fun showFilteredConversations() {
+    private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
         val sortedConversations = latestConversations
             .filter { conversation ->
                 val category = selectedCategory
@@ -445,9 +445,13 @@ class MainActivity : SimpleActivity() {
             ) as ArrayList<Conversation>
 
         getOrCreateConversationsAdapter().updateConversations(sortedConversations) {
+            if (updatePlaceholder) {
+                showOrHidePlaceholder(sortedConversations.isEmpty())
+            }
+        }
+        if (updatePlaceholder) {
             showOrHidePlaceholder(sortedConversations.isEmpty())
         }
-        showOrHidePlaceholder(sortedConversations.isEmpty())
     }
 
     private fun showOrHideProgress(show: Boolean) {
