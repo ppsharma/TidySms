@@ -32,29 +32,6 @@
             android:padding="4dp">
 
             <RadioButton
-                android:id="@+id/category_all"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:button="@null"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="All"
-                android:textSize="@dimen/normal_text_size"
-                android:checked="true" />
-
-            <RadioButton
-                android:id="@+id/category_personal"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:button="@null"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="Personal"
-                android:textSize="@dimen/normal_text_size" />
-
-            <RadioButton
                 android:id="@+id/category_transactions"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -62,8 +39,9 @@
                 android:button="@null"
                 android:gravity="center"
                 android:padding="8dp"
-                android:text="Transactions"
-                android:textSize="@dimen/normal_text_size" />
+                android:text="@string/category_transactions"
+                android:textSize="@dimen/normal_text_size"
+                android:checked="true" />
 
             <RadioButton
                 android:id="@+id/category_promotions"
@@ -73,7 +51,40 @@
                 android:button="@null"
                 android:gravity="center"
                 android:padding="8dp"
-                android:text="Promotions"
+                android:text="@string/category_promotions"
+                android:textSize="@dimen/normal_text_size" />
+
+            <RadioButton
+                android:id="@+id/category_personal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:button="@null"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/category_personal"
+                android:textSize="@dimen/normal_text_size" />
+
+            <RadioButton
+                android:id="@+id/category_uncategorised"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:button="@null"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/category_uncategorised"
+                android:textSize="@dimen/normal_text_size" />
+
+            <RadioButton
+                android:id="@+id/category_all"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:button="@null"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/category_all"
                 android:textSize="@dimen/normal_text_size" />
         </RadioGroup>
 

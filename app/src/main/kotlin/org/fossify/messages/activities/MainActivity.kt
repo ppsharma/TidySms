@@ -84,7 +84,7 @@ class MainActivity : SimpleActivity() {
     private var storedFontSize = 0
     private var lastSearchedText = ""
     private var bus: EventBus? = null
-    private var selectedCategory: SmsClassifier.Category? = null
+    private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
     private var latestConversations = arrayListOf<Conversation>()
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
@@ -279,13 +279,27 @@ class MainActivity : SimpleActivity() {
     private fun initMessenger() {
         checkWhatsNewDialog()
         storeStateVariables()
+        selectedCategory = runCatching {
+            SmsClassifier.Category.valueOf(config.selectedInboxCategory)
+        }.getOrNull()
+        binding.inboxCategoryGroup.check(
+            when (selectedCategory) {
+                SmsClassifier.Category.TRANSACTIONS -> R.id.category_transactions
+                SmsClassifier.Category.PROMOTIONS -> R.id.category_promotions
+                SmsClassifier.Category.PERSONAL -> R.id.category_personal
+                SmsClassifier.Category.UNCATEGORISED -> R.id.category_uncategorised
+                null -> R.id.category_all
+            }
+        )
         binding.inboxCategoryGroup.setOnCheckedChangeListener { _, checkedId ->
             selectedCategory = when (checkedId) {
-                R.id.category_personal -> SmsClassifier.Category.PERSONAL
                 R.id.category_transactions -> SmsClassifier.Category.TRANSACTIONS
                 R.id.category_promotions -> SmsClassifier.Category.PROMOTIONS
+                R.id.category_personal -> SmsClassifier.Category.PERSONAL
+                R.id.category_uncategorised -> SmsClassifier.Category.UNCATEGORISED
                 else -> null
             }
+            config.selectedInboxCategory = selectedCategory?.name ?: "ALL"
             showFilteredConversations()
         }
         getCachedConversations()
