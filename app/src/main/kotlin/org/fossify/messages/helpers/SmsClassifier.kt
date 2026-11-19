@@ -1,6 +1,7 @@
 package org.fossify.messages.helpers
 
 /** Offline, rule-based SMS classifier. Uncertain messages remain Uncategorised. */
+@Suppress("MaxLineLength", "MagicNumber")
 object SmsClassifier {
     enum class Category { PERSONAL, TRANSACTIONS, PROMOTIONS, UNCATEGORISED }
     data class Classification(val category: Category, val confidence: Float, val matchedSignals: List<String>)

@@ -168,6 +168,7 @@ class ConversationDetailsActivity : SimpleActivity() {
     }
 
 
+    @Suppress("MaxLineLength")
     private fun setupSenderCategory() {
         val currentConversation = conversation ?: return
         val sender = currentConversation.phoneNumber

@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@Suppress("MaxLineLength")
 class SmsClassifierTest {
     @Test fun bankDebitAlertIsTransaction() {
         val result = SmsClassifier.classify("INR 5,000 debited from your A/c XX1234 via UPI. Available balance INR 12,000.")

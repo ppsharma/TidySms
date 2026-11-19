@@ -5,6 +5,7 @@ import org.fossify.commons.helpers.BaseConfig
 import org.fossify.messages.extensions.getDefaultKeyboardHeight
 import org.fossify.messages.models.Conversation
 
+@Suppress("TooManyFunctions")
 class Config(context: Context) : BaseConfig(context) {
     companion object {
         private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
