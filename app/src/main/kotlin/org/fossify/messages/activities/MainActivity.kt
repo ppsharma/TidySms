@@ -93,6 +93,7 @@ class MainActivity : SimpleActivity() {
     private var latestConversations = arrayListOf<Conversation>()
     private var hasLoadedConversations = false
     private var savedContactNumbers: Set<String> = emptySet()
+    private var lastRenderedManualCategoryState: List<Pair<String, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
@@ -136,6 +137,12 @@ class MainActivity : SimpleActivity() {
 
         updateTextColors(binding.mainCoordinator)
         updateInboxCategoryStyles()
+        val currentManualCategoryState = latestConversations.map { conversation ->
+            conversation.phoneNumber to config.getManualCategoryForSender(conversation.phoneNumber)?.name
+        }
+        if (currentManualCategoryState != lastRenderedManualCategoryState) {
+            showFilteredConversations()
+        }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())
 
         val properPrimaryColor = getProperPrimaryColor()
@@ -497,6 +504,9 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
+        lastRenderedManualCategoryState = latestConversations.map { conversation ->
+            conversation.phoneNumber to config.getManualCategoryForSender(conversation.phoneNumber)?.name
+        }
         val sortedConversations = ArrayList(
             latestConversations
                 .filter { conversation ->
