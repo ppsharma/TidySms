@@ -80,6 +80,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
+@Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
     override var isSearchBarEnabled = true
     
@@ -433,11 +434,27 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun isSavedContactNumber(number: String): Boolean {
-        if (number.isBlank() || checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
-        val lookupUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
+        val hasContactsPermission = checkSelfPermission(android.Manifest.permission.READ_CONTACTS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (number.isBlank() || !hasContactsPermission) {
+            return false
+        }
+
+        val lookupUri = Uri.withAppendedPath(
+            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+            Uri.encode(number)
+        )
         return try {
-            contentResolver.query(lookupUri, arrayOf(ContactsContract.PhoneLookup._ID), null, null, null)?.use { it.moveToFirst() } ?: false
-        } catch (_: SecurityException) { false }
+            contentResolver.query(
+                lookupUri,
+                arrayOf(ContactsContract.PhoneLookup._ID),
+                null,
+                null,
+                null
+            )?.use { it.moveToFirst() } ?: false
+        } catch (_: SecurityException) {
+            false
+        }
     }
 
     private fun getOrCreateConversationsAdapter(): ConversationsAdapter {

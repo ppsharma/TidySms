@@ -25,41 +25,78 @@ object SmsClassifier {
     fun classify(body: String, sender: String, isSavedContact: Boolean): Classification {
         if (isSavedContact) return result(Category.PERSONAL, "saved contact")
         val text = body.trim()
-        val header = headerType(sender)
-        if (header == HeaderType.PROMOTIONAL) return result(Category.PROMOTIONS, "TRAI header -P")
-        if (header == HeaderType.TRANSACTIONAL) return result(Category.TRANSACTIONS, "TRAI header -T")
-        if (text.isEmpty()) return Classification(Category.UNCATEGORISED, 0.0f, emptyList())
+        classifyHeader(headerType(sender), text)?.let { return it }
+        return classifyBySignals(text)
+    }
 
-        val transactions = transactionSignals.filter { it.second.containsMatchIn(text) }.map { it.first }
-        val promotions = promotionSignals.filter { it.second.containsMatchIn(text) }.map { it.first }
-        val personal = personalSignals.filter { it.second.containsMatchIn(text) }.map { it.first }
+    private fun classifyHeader(header: HeaderType, text: String): Classification? {
+        return when (header) {
+            HeaderType.PROMOTIONAL -> result(Category.PROMOTIONS, "TRAI header -P")
+            HeaderType.TRANSACTIONAL -> result(Category.TRANSACTIONS, "TRAI header -T")
+            HeaderType.SERVICE, HeaderType.GOVERNMENT -> classifyServiceHeader(header, text)
+            HeaderType.UNKNOWN -> if (text.isEmpty()) {
+                Classification(Category.UNCATEGORISED, 0.0f, emptyList())
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun classifyServiceHeader(header: HeaderType, text: String): Classification {
+        val transactions = matchingSignals(transactionSignals, text)
+        val promotions = matchingSignals(promotionSignals, text)
+        return when {
+            promotions.size >= 2 && promotions.size > transactions.size ->
+                Classification(Category.PROMOTIONS, confidence(promotions.size, transactions.size), promotions)
+            transactions.isNotEmpty() ->
+                Classification(Category.TRANSACTIONS, 0.72f, transactions + header.name)
+            else -> Classification(
+                Category.TRANSACTIONS,
+                0.62f,
+                listOf("TRAI header -${if (header == HeaderType.SERVICE) "S" else "G"}")
+            )
+        }
+    }
+
+    private fun classifyBySignals(text: String): Classification {
+        val transactions = matchingSignals(transactionSignals, text)
+        val promotions = matchingSignals(promotionSignals, text)
+        val personal = matchingSignals(personalSignals, text)
         val personalPhrase = personalConversation.containsMatchIn(text)
         val hasPersonalContext = personal.contains("personal question") ||
             personal.contains("personal plans") || personal.size >= 2 || personalPhrase
 
-        if (header == HeaderType.SERVICE || header == HeaderType.GOVERNMENT) {
-            return when {
-                promotions.size >= 2 && promotions.size > transactions.size ->
-                    Classification(Category.PROMOTIONS, confidence(promotions.size, transactions.size), promotions)
-                transactions.isNotEmpty() -> Classification(Category.TRANSACTIONS, 0.72f, transactions + header.name)
-                else -> Classification(Category.TRANSACTIONS, 0.62f, listOf("TRAI header -${if (header == HeaderType.SERVICE) "S" else "G"}"))
-            }
-        }
-
         return when {
-            transactions.any { it == "service reminder" || it == "government compliance" } && transactions.size >= promotions.size ->
+            hasPriorityTransaction(transactions, promotions) ->
                 Classification(Category.TRANSACTIONS, 0.78f, transactions)
-            promotions.any { it == "promotional call-to-action" || it == "investment solicitation" } && promotions.size >= transactions.size ->
+            hasPriorityPromotion(promotions, transactions) ->
                 Classification(Category.PROMOTIONS, 0.78f, promotions)
             transactions.size >= 2 && transactions.size > promotions.size ->
                 Classification(Category.TRANSACTIONS, confidence(transactions.size, promotions.size), transactions)
             promotions.size >= 2 && promotions.size > transactions.size ->
                 Classification(Category.PROMOTIONS, confidence(promotions.size, transactions.size), promotions)
             hasPersonalContext && transactions.isEmpty() && promotions.isEmpty() ->
-                Classification(Category.PERSONAL, 0.72f, personal + if (personalPhrase) listOf("conversational phrase") else emptyList())
+                Classification(
+                    Category.PERSONAL,
+                    0.72f,
+                    personal + if (personalPhrase) listOf("conversational phrase") else emptyList()
+                )
             else -> Classification(Category.UNCATEGORISED, 0.35f, emptyList())
         }
     }
+
+    private fun hasPriorityTransaction(transactions: List<String>, promotions: List<String>) =
+        transactions.any { it == "service reminder" || it == "government compliance" } &&
+            transactions.size >= promotions.size
+
+    private fun hasPriorityPromotion(promotions: List<String>, transactions: List<String>) =
+        promotions.any { it == "promotional call-to-action" || it == "investment solicitation" } &&
+            promotions.size >= transactions.size
+
+    private fun matchingSignals(
+        signals: List<Pair<String, Regex>>,
+        text: String
+    ): List<String> = signals.filter { it.second.containsMatchIn(text) }.map { it.first }
 
     private fun result(category: Category, signal: String) = Classification(category, 0.95f, listOf(signal))
 
