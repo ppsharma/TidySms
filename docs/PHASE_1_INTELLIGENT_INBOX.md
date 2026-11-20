@@ -1,21 +1,57 @@
-# Phase 1 — Intelligent Inbox (implementation notes)
+# Phase 1 — Intelligent Inbox
 
-## Scope
-Phase 1 introduces offline categorisation into Personal, Transactions, and Promotions. It does not automatically delete, quarantine, or suppress any message. Spam quarantine remains a separate later phase, and the existing Recycle Bin remains unchanged.
+## Agreed scope
 
-## First implementation slice
-- Add a deterministic, local-only Kotlin classifier with no network or Android dependencies.
-- Ambiguous and unknown messages default to Personal.
-- Expose matched rule signals and a conservative confidence value so later UI can explain and allow corrections.
-- Keep classification separate from OTP extraction (Phase 2).
+Phase 1 adds offline inbox categories while retaining the existing Fossify Messages storage, SMS retrieval, conversation adapter, search, archive, compose, and Recycle Bin flows.
 
-## Safety and data handling
-- No message body or sender is transmitted.
-- No existing SMS is modified by this classifier.
-- Do not make the experimental APK the default SMS app on a primary phone.
-- Before integrating classifications into Room, add an explicit non-destructive database migration. Do not rely on destructive migration for user data.
+The inbox categories are:
+- Transactions
+- Promotions
+- Personal
+- Uncategorised
+- All
 
-## Validation still required
-- Build the Foss debug variant.
-- Add a representative synthetic Indian SMS test corpus covering bank alerts, UPI, bills, shopping promotions, delivery notices, telecom alerts, and ordinary personal messages.
-- Review false positives before wiring categories into the inbox.
+Transactions is the default opening category. Messages with uncertain or insufficient signals remain Uncategorised; they are not silently promoted to Personal. All shows every non-archived conversation.
+
+## Classification and sender controls
+
+- Classification is deterministic, local-only, and does not require network access.
+- TRAI sender-header metadata is evaluated before message wording.
+- Saved contacts are treated as Personal in the inbox.
+- A sender-level manual category override takes precedence over automatic classification and persists locally.
+- Resetting a sender to Automatic removes that override.
+- Category selection persists locally across app restarts.
+- The sender category control is separate from blocking a sender.
+- The classifier exposes matched signals and a confidence value for diagnostics and future explanation.
+
+## Existing data and safety
+
+- Existing SMS/MMS history continues to be read through the existing Android Telephony provider and Fossify database pipeline; no parallel message store or adapter is introduced.
+- The classifier does not rewrite or delete message content.
+- No message body, OTP, contact name, or phone number is transmitted by the classifier.
+- Spam quarantine and OTP extraction are outside Phase 1.
+- The existing Recycle Bin behaviour remains unchanged.
+- Do not install or test an experimental build as the default SMS app on a primary phone used for banking or OTPs.
+
+## Phase 1 completion gates
+
+### 1A — Product fixes and integration
+- Confirm first-launch history retrieval and category filtering.
+- Verify manual sender override, reset to Automatic, and persistence.
+- Verify category selection survives restart and All restores the full inbox.
+- Verify search, compose/return, archive, recycle bin, incoming messages, and dual-SIM behaviour.
+- Audit for duplicate retrieval, database, adapter, and listener responsibilities.
+- Confirm branding, system appearance, and typography.
+
+### 1B — Persistent diagnostics
+- Add privacy-safe persistent diagnostic logs for development/test builds only.
+- Never log message bodies, OTPs, contact names, phone numbers, or attachments.
+- Provide folder selection, sharing, rotation, and clear controls.
+
+### 1C — Consolidated validation
+- Run unit tests, Android lint, Detekt, and the debug build.
+- Complete regression checks and final review before requesting approval to merge.
+
+## Current validation notes
+
+The classifier unit tests and Detekt have passed on the current development revision. Android lint and the debug APK workflow are still being checked. CI success does not replace regression testing on an emulator or secondary device.
