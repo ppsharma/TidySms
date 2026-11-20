@@ -18,9 +18,12 @@ object SmsClassifier {
         }
     }
 
-    fun classify(body: String): Classification = classify(body, "")
+    fun classify(body: String): Classification = classify(body, "", false)
 
-    fun classify(body: String, sender: String): Classification {
+    fun classify(body: String, sender: String): Classification = classify(body, sender, false)
+
+    fun classify(body: String, sender: String, isSavedContact: Boolean): Classification {
+        if (isSavedContact) return result(Category.PERSONAL, "saved contact")
         val text = body.trim()
         val header = headerType(sender)
         if (header == HeaderType.PROMOTIONAL) return result(Category.PROMOTIONS, "TRAI header -P")
@@ -44,6 +47,10 @@ object SmsClassifier {
         }
 
         return when {
+            transactions.any { it == "service reminder" || it == "government compliance" } && transactions.size >= promotions.size ->
+                Classification(Category.TRANSACTIONS, 0.78f, transactions)
+            promotions.any { it == "promotional call-to-action" || it == "investment solicitation" } && promotions.size >= transactions.size ->
+                Classification(Category.PROMOTIONS, 0.78f, promotions)
             transactions.size >= 2 && transactions.size > promotions.size ->
                 Classification(Category.TRANSACTIONS, confidence(transactions.size, promotions.size), transactions)
             promotions.size >= 2 && promotions.size > transactions.size ->

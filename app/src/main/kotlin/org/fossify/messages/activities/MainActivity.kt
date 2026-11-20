@@ -3,6 +3,9 @@ package org.fossify.messages.activities
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
+import android.net.Uri
+import android.provider.ContactsContract
+import android.telephony.PhoneNumberUtils
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Color
@@ -89,6 +92,7 @@ class MainActivity : SimpleActivity() {
     private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
     private var latestConversations = arrayListOf<Conversation>()
     private var hasLoadedConversations = false
+    private var savedContactNumbers: Set<String> = emptySet()
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -352,6 +356,8 @@ class MainActivity : SimpleActivity() {
         ensureBackgroundThread {
             val privateContacts = MyContactsContentProvider.getSimpleContacts(this, privateCursor)
             val conversations = getConversations(privateContacts = privateContacts)
+            savedContactNumbers = cachedConversations.map { it.phoneNumber }
+                .filter { isSavedContactNumber(it) }.toSet()
 
             conversations.forEach { clonedConversation ->
                 val threadIds = cachedConversations.map { it.threadId }
@@ -413,6 +419,14 @@ class MainActivity : SimpleActivity() {
                 }
             }
         }
+    }
+
+    private fun isSavedContactNumber(number: String): Boolean {
+        if (number.isBlank() || checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+        val lookupUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
+        return try {
+            contentResolver.query(lookupUri, arrayOf(ContactsContract.PhoneLookup._ID), null, null, null)?.use { it.moveToFirst() } ?: false
+        } catch (_: SecurityException) { false }
     }
 
     private fun getOrCreateConversationsAdapter(): ConversationsAdapter {
@@ -488,7 +502,9 @@ class MainActivity : SimpleActivity() {
                 val category = selectedCategory
                 category == null ||
                     (config.getManualCategoryForSender(conversation.phoneNumber)
-                        ?: SmsClassifier.classify(conversation.snippet, conversation.phoneNumber).category) == category
+                        ?: SmsClassifier.classify(conversation.snippet, conversation.phoneNumber,
+                        savedContactNumbers.any { PhoneNumberUtils.compare(it, conversation.phoneNumber) }
+                    ).category) == category
             }
             .sortedWith(
                 compareByDescending<Conversation> {

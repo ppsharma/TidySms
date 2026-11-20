@@ -25,6 +25,18 @@ class SmsClassifierTest {
     @Test fun serviceHeaderMapsToTransactionsWhenNoPromotion() = assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify("Your service request is registered", "AX-ITDCPC-S").category)
     @Test fun governmentHeaderMapsToTransactions() = assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify("Your ITR has been processed", "AD-ITDEPT-G").category)
 
+    @Test fun savedContactAlwaysClassifiesAsPersonal() {
+        assertEquals(SmsClassifier.Category.PERSONAL, SmsClassifier.classify("Your account OTP is 123456", "9876543210", true).category)
+    }
+
+    @Test fun unknownSenderCallLaterIsPersonal() {
+        assertEquals(SmsClassifier.Category.PERSONAL, SmsClassifier.classify("Can't talk right now, call later", "9876543210").category)
+    }
+
+    @Test fun promotionalHeaderOverridesPersonalWording() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify("Call me later", "AD-TEST-P").category)
+    }
+
     private fun assertCategory(expected: SmsClassifier.Category, body: String) {
         assertEquals(expected, SmsClassifier.classify(body).category)
     }
