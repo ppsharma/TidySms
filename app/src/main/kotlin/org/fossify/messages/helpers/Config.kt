@@ -5,8 +5,12 @@ import org.fossify.commons.helpers.BaseConfig
 import org.fossify.messages.extensions.getDefaultKeyboardHeight
 import org.fossify.messages.models.Conversation
 
+@Suppress("TooManyFunctions")
 class Config(context: Context) : BaseConfig(context) {
     companion object {
+        private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
+        private const val MANUAL_SENDER_CATEGORY_PREFIX = "manual_sender_category_"
+
         fun newInstance(context: Context) = Config(context)
     }
 
@@ -15,6 +19,26 @@ class Config(context: Context) : BaseConfig(context) {
     }
 
     fun getUseSIMIdAtNumber(number: String) = prefs.getInt(USE_SIM_ID_PREFIX + number, 0)
+
+    var selectedInboxCategory: String
+        get() = prefs.getString(SELECTED_INBOX_CATEGORY, "TRANSACTIONS") ?: "TRANSACTIONS"
+        set(value) = prefs.edit().putString(SELECTED_INBOX_CATEGORY, value).apply()
+
+    fun getManualCategoryForSender(sender: String): SmsClassifier.Category? {
+        val key = sender.trim().lowercase().filter { it.isLetterOrDigit() || it == '+' }
+        if (key.isEmpty()) return null
+        val stored = prefs.getString(MANUAL_SENDER_CATEGORY_PREFIX + key, null) ?: return null
+        return runCatching { SmsClassifier.Category.valueOf(stored) }.getOrNull()
+    }
+
+    fun setManualCategoryForSender(sender: String, category: SmsClassifier.Category?) {
+        val key = sender.trim().lowercase().filter { it.isLetterOrDigit() || it == '+' }
+        if (key.isEmpty()) return
+        prefs.edit().apply {
+            if (category == null) remove(MANUAL_SENDER_CATEGORY_PREFIX + key)
+            else putString(MANUAL_SENDER_CATEGORY_PREFIX + key, category.name)
+        }.apply()
+    }
 
     var showCharacterCounter: Boolean
         get() = prefs.getBoolean(SHOW_CHARACTER_COUNTER, false)

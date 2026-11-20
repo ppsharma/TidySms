@@ -1,18 +1,19 @@
-
-name: TidySMS Debug APK
+name: TidySMS Phase 1 validation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - development/phase-1-intelligent-inbox
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Android APK
+  validate-and-build:
+    name: Unit tests and debug APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 40
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -23,13 +24,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Run classifier unit tests
+        run: ./gradlew --no-daemon testFossDebugUnitTest
+
       - name: Build debug APK
         run: ./gradlew --no-daemon assembleFossDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TidySMS-debug-APK
+          name: TidySMS-phase-1-debug-APK
           path: app/build/outputs/apk/foss/debug/*.apk
           if-no-files-found: error
           retention-days: 14

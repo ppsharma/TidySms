@@ -25,7 +25,7 @@ fun hasSigningVars(): Boolean {
 
 base {
     val versionCode = project.property("VERSION_CODE").toString().toInt()
-    archivesName = "messages-$versionCode"
+    archivesName = "tidysms-$versionCode"
 }
 
 android {
@@ -140,6 +140,7 @@ detekt {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     implementation(libs.fossify.commons)
     implementation(libs.eventbus)
     implementation(libs.indicator.fast.scroll)

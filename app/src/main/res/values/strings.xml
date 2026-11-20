@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Messages</string>
+    <string name="sender_category">Message category</string>
+    <string name="category_automatic">Automatic</string>
+    <string name="category_manual">Manual</string>
+    <string name="sender_category_value">%1$s · %2$s</string>
+    <string name="category_transactions">Transactions</string>
+    <string name="category_promotions">Promotions</string>
+    <string name="category_personal">Personal</string>
+    <string name="category_uncategorised">Uncategorised</string>
+    <string name="category_all">All</string>
+    <string name="app_launcher_name">TidySMS</string>
     <string name="type_a_message">Type a message…</string>
     <string name="message_not_sent_short">Message not sent</string>
     <string name="message_not_sent_touch_retry">Not sent. Touch to retry.</string>

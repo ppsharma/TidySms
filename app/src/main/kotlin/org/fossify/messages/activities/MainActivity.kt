@@ -3,8 +3,11 @@ package org.fossify.messages.activities
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
+import android.telephony.PhoneNumberUtils
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
@@ -62,7 +65,9 @@ import org.fossify.messages.extensions.conversationsDB
 import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getMessages
 import org.fossify.messages.extensions.insertOrUpdateConversation
+import org.fossify.messages.extensions.isSavedContactNumber
 import org.fossify.messages.extensions.messagesDB
+import org.fossify.messages.helpers.SmsClassifier
 import org.fossify.messages.helpers.SEARCHED_MESSAGE_ID
 import org.fossify.messages.helpers.THREAD_ID
 import org.fossify.messages.helpers.THREAD_TITLE
@@ -74,6 +79,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
+@Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
     override var isSearchBarEnabled = true
     
@@ -83,6 +89,12 @@ class MainActivity : SimpleActivity() {
     private var storedFontSize = 0
     private var lastSearchedText = ""
     private var bus: EventBus? = null
+    private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
+    private var latestConversations = arrayListOf<Conversation>()
+    private var hasLoadedConversations = false
+    private var savedContactNumbers: Set<String> = emptySet()
+    private var lastRenderedManualCategoryState: List<Pair<String, String?>> = emptyList()
+    private var inboxCategoryControlsInitialized = false
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -124,6 +136,13 @@ class MainActivity : SimpleActivity() {
         }
 
         updateTextColors(binding.mainCoordinator)
+        updateInboxCategoryStyles()
+        val currentManualCategoryState = latestConversations.map { conversation ->
+            conversation.phoneNumber to config.getManualCategoryForSender(conversation.phoneNumber)?.name
+        }
+        if (currentManualCategoryState != lastRenderedManualCategoryState) {
+            showFilteredConversations()
+        }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())
 
         val properPrimaryColor = getProperPrimaryColor()
@@ -276,20 +295,51 @@ class MainActivity : SimpleActivity() {
     private fun initMessenger() {
         checkWhatsNewDialog()
         storeStateVariables()
+        if (!inboxCategoryControlsInitialized) {
+            setupInboxCategoryControls()
+            binding.noConversationsPlaceholder2.setOnClickListener {
+                launchNewConversation()
+            }
+            binding.conversationsFab.setOnClickListener {
+                launchNewConversation()
+            }
+            inboxCategoryControlsInitialized = true
+        }
         getCachedConversations()
-        binding.noConversationsPlaceholder2.setOnClickListener {
-            launchNewConversation()
-        }
+    }
 
-        binding.conversationsFab.setOnClickListener {
-            launchNewConversation()
+    private fun setupInboxCategoryControls() {
+        selectedCategory = runCatching {
+            SmsClassifier.Category.valueOf(config.selectedInboxCategory)
+        }.getOrNull()
+        binding.inboxCategoryGroup.check(
+            when (selectedCategory) {
+                SmsClassifier.Category.TRANSACTIONS -> R.id.category_transactions
+                SmsClassifier.Category.PROMOTIONS -> R.id.category_promotions
+                SmsClassifier.Category.PERSONAL -> R.id.category_personal
+                SmsClassifier.Category.UNCATEGORISED -> R.id.category_uncategorised
+                null -> R.id.category_all
+            }
+        )
+        binding.inboxCategoryGroup.setOnCheckedChangeListener { _, checkedId ->
+            selectedCategory = when (checkedId) {
+                R.id.category_transactions -> SmsClassifier.Category.TRANSACTIONS
+                R.id.category_promotions -> SmsClassifier.Category.PROMOTIONS
+                R.id.category_personal -> SmsClassifier.Category.PERSONAL
+                R.id.category_uncategorised -> SmsClassifier.Category.UNCATEGORISED
+                else -> null
+            }
+            config.selectedInboxCategory = selectedCategory?.name ?: "ALL"
+            updateInboxCategoryStyles()
+            showFilteredConversations()
         }
+        updateInboxCategoryStyles()
     }
 
     private fun getCachedConversations() {
         ensureBackgroundThread {
             val conversations = try {
-                conversationsDB.getNonArchived().toMutableList() as ArrayList<Conversation>
+                ArrayList(conversationsDB.getNonArchived())
             } catch (_: Exception) {
                 ArrayList()
             }
@@ -303,7 +353,7 @@ class MainActivity : SimpleActivity() {
             runOnUiThread {
                 setupConversations(conversations, cached = true)
                 getNewConversations(
-                    (conversations + archived).toMutableList() as ArrayList<Conversation>
+                    ArrayList(conversations + archived)
                 )
             }
             conversations.forEach {
@@ -317,6 +367,15 @@ class MainActivity : SimpleActivity() {
         ensureBackgroundThread {
             val privateContacts = MyContactsContentProvider.getSimpleContacts(this, privateCursor)
             val conversations = getConversations(privateContacts = privateContacts)
+            // Resolve contacts against both the database cache and freshly read provider
+            // conversations so first-launch classification does not miss saved contacts.
+            savedContactNumbers = (cachedConversations + conversations)
+                .asSequence()
+                .map { it.phoneNumber }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .filter { isSavedContactNumber(it) }
+                .toSet()
 
             conversations.forEach { clonedConversation ->
                 val threadIds = cachedConversations.map { it.threadId }
@@ -364,7 +423,7 @@ class MainActivity : SimpleActivity() {
                 }
             }
 
-            val allConversations = conversationsDB.getNonArchived() as ArrayList<Conversation>
+            val allConversations = ArrayList(conversationsDB.getNonArchived())
             runOnUiThread {
                 setupConversations(allConversations)
             }
@@ -403,13 +462,8 @@ class MainActivity : SimpleActivity() {
         conversations: ArrayList<Conversation>,
         cached: Boolean = false,
     ) {
-        val sortedConversations = conversations
-            .sortedWith(
-                compareByDescending<Conversation> {
-                    config.pinnedConversations.contains(it.threadId.toString())
-                }.thenByDescending { it.date }
-            ).toMutableList() as ArrayList<Conversation>
-
+        latestConversations = ArrayList(conversations)
+        hasLoadedConversations = true
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the
             // loading placeholder and progress until we are done loading from telephony
@@ -419,15 +473,68 @@ class MainActivity : SimpleActivity() {
             showOrHidePlaceholder(conversations.isEmpty())
         }
 
-        try {
-            getOrCreateConversationsAdapter().apply {
-                updateConversations(sortedConversations) {
-                    if (!cached) {
-                        showOrHidePlaceholder(currentList.isEmpty())
-                    }
-                }
+        showFilteredConversations(updatePlaceholder = !cached)
+    }
+
+
+    @Suppress("MagicNumber")
+    private fun updateInboxCategoryStyles() {
+        val primaryColor = getProperPrimaryColor()
+        val textColor = getProperTextColor()
+        val backgroundColor = getProperBackgroundColor()
+        val density = resources.displayMetrics.density
+        val cornerRadius = 18f * density
+
+        for (index in 0 until binding.inboxCategoryGroup.childCount) {
+            val button = binding.inboxCategoryGroup.getChildAt(index) as? android.widget.RadioButton
+                ?: continue
+            val isSelected = button.isChecked
+            button.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setCornerRadius(cornerRadius)
+                setColor(if (isSelected) primaryColor else backgroundColor)
+                setStroke(
+                    (density).toInt().coerceAtLeast(1),
+                    if (isSelected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA)
+                )
             }
-        } catch (_: Exception) {
+            button.setTextColor(if (isSelected) Color.WHITE else textColor)
+            button.alpha = if (isSelected) 1f else 0.88f
+        }
+    }
+
+    private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
+        lastRenderedManualCategoryState = latestConversations.map { conversation ->
+            conversation.phoneNumber to config.getManualCategoryForSender(conversation.phoneNumber)?.name
+        }
+        val sortedConversations = ArrayList(
+            latestConversations
+                .filter { conversation ->
+                    val category = selectedCategory
+                    category == null ||
+                        (config.getManualCategoryForSender(conversation.phoneNumber)
+                            ?: SmsClassifier.classify(
+                                conversation.snippet,
+                                conversation.phoneNumber,
+                                savedContactNumbers.any {
+                                    PhoneNumberUtils.compare(it, conversation.phoneNumber)
+                                }
+                            ).category) == category
+                }
+                .sortedWith(
+                    compareByDescending<Conversation> {
+                        config.pinnedConversations.contains(it.threadId.toString())
+                    }.thenByDescending { it.date }
+                )
+        )
+
+        getOrCreateConversationsAdapter().updateConversations(sortedConversations) {
+            if (updatePlaceholder) {
+                showOrHidePlaceholder(sortedConversations.isEmpty())
+            }
+        }
+        if (updatePlaceholder) {
+            showOrHidePlaceholder(sortedConversations.isEmpty())
         }
     }
 
