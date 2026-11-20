@@ -43,10 +43,14 @@ Transactions is the default opening category. Messages with uncertain or insuffi
 - Audit for duplicate retrieval, database, adapter, and listener responsibilities.
 - Confirm branding, system appearance, and typography.
 
-### 1B — Persistent diagnostics
-- Add privacy-safe persistent diagnostic logs for development/test builds only.
-- Never log message bodies, OTPs, contact names, phone numbers, or attachments.
-- Provide folder selection, sharing, rotation, and clear controls.
+### 1B — Lightweight crash diagnostics
+- Install one process-wide uncaught-exception handler and preserve Android's existing handler.
+- Save the latest three crash reports in app-private storage; no external folders or storage permissions.
+- Include UTC time, app version, Android/device details, exception class, thread, and stack frames.
+- Deliberately omit exception messages because they may contain SMS text, OTPs, phone numbers, or other private data.
+- Add one Settings action to share reports through Android's share sheet.
+- Do not add event/session logging, SAF folder selection, a diagnostics screen, or clear/rotation controls.
+- Crash capture does not cover OS kills, force-stops, or all hangs/freezes; those require Logcat/ADB or reproduction.
 
 ### 1C — Consolidated validation
 - Run unit tests, Android lint, Detekt, and the debug build.
