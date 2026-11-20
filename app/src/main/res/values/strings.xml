@@ -10,6 +10,9 @@
     <string name="category_uncategorised">Uncategorised</string>
     <string name="category_all">All</string>
     <string name="app_launcher_name">TidySMS</string>
+    <string name="share_crash_report">Share crash report</string>
+    <string name="crash_report_subject">TidySMS crash report</string>
+    <string name="no_crash_report">No crash report is available</string>
     <string name="type_a_message">Type a message…</string>
     <string name="message_not_sent_short">Message not sent</string>
     <string name="message_not_sent_touch_retry">Not sent. Touch to retry.</string>
