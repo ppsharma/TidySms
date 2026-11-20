@@ -1,7 +1,7 @@
 package org.fossify.messages.helpers
 
 /** Offline, rule-based SMS classifier. Sender metadata is evaluated before message wording. */
-@Suppress("MaxLineLength", "MagicNumber")
+@Suppress("MaxLineLength", "MagicNumber", "TooManyFunctions")
 object SmsClassifier {
     enum class Category { PERSONAL, TRANSACTIONS, PROMOTIONS, UNCATEGORISED }
     enum class HeaderType { PROMOTIONAL, TRANSACTIONAL, SERVICE, GOVERNMENT, UNKNOWN }
@@ -63,9 +63,19 @@ object SmsClassifier {
         val promotions = matchingSignals(promotionSignals, text)
         val personal = matchingSignals(personalSignals, text)
         val personalPhrase = personalConversation.containsMatchIn(text)
-        val hasPersonalContext = personal.contains("personal question") ||
-            personal.contains("personal plans") || personal.size >= 2 || personalPhrase
+        val primaryResult = classifyPrimarySignals(transactions, promotions)
+        return primaryResult ?: classifyPersonalOrUncategorised(
+            transactions,
+            promotions,
+            personal,
+            personalPhrase
+        )
+    }
 
+    private fun classifyPrimarySignals(
+        transactions: List<String>,
+        promotions: List<String>
+    ): Classification? {
         return when {
             hasPriorityTransaction(transactions, promotions) ->
                 Classification(Category.TRANSACTIONS, 0.78f, transactions)
@@ -75,13 +85,26 @@ object SmsClassifier {
                 Classification(Category.TRANSACTIONS, confidence(transactions.size, promotions.size), transactions)
             promotions.size >= 2 && promotions.size > transactions.size ->
                 Classification(Category.PROMOTIONS, confidence(promotions.size, transactions.size), promotions)
-            hasPersonalContext && transactions.isEmpty() && promotions.isEmpty() ->
-                Classification(
-                    Category.PERSONAL,
-                    0.72f,
-                    personal + if (personalPhrase) listOf("conversational phrase") else emptyList()
-                )
-            else -> Classification(Category.UNCATEGORISED, 0.35f, emptyList())
+            else -> null
+        }
+    }
+
+    private fun classifyPersonalOrUncategorised(
+        transactions: List<String>,
+        promotions: List<String>,
+        personal: List<String>,
+        personalPhrase: Boolean
+    ): Classification {
+        val hasPersonalContext = personal.contains("personal question") ||
+            personal.contains("personal plans") || personal.size >= 2 || personalPhrase
+        return if (hasPersonalContext && transactions.isEmpty() && promotions.isEmpty()) {
+            Classification(
+                Category.PERSONAL,
+                0.72f,
+                personal + if (personalPhrase) listOf("conversational phrase") else emptyList()
+            )
+        } else {
+            Classification(Category.UNCATEGORISED, 0.35f, emptyList())
         }
     }
 
