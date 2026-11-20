@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength", "MagicNumber")
+
 package org.fossify.messages.helpers
 
 import android.content.Context
