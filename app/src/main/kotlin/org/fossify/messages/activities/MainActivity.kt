@@ -332,7 +332,7 @@ class MainActivity : SimpleActivity() {
     private fun getCachedConversations() {
         ensureBackgroundThread {
             val conversations = try {
-                conversationsDB.getNonArchived().toMutableList() as ArrayList<Conversation>
+                ArrayList(conversationsDB.getNonArchived())
             } catch (_: Exception) {
                 ArrayList()
             }
@@ -346,7 +346,7 @@ class MainActivity : SimpleActivity() {
             runOnUiThread {
                 setupConversations(conversations, cached = true)
                 getNewConversations(
-                    (conversations + archived).toMutableList() as ArrayList<Conversation>
+                    ArrayList(conversations + archived)
                 )
             }
             conversations.forEach {
@@ -416,7 +416,7 @@ class MainActivity : SimpleActivity() {
                 }
             }
 
-            val allConversations = conversationsDB.getNonArchived() as ArrayList<Conversation>
+            val allConversations = ArrayList(conversationsDB.getNonArchived())
             runOnUiThread {
                 setupConversations(allConversations)
             }
