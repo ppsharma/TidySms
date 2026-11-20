@@ -191,7 +191,7 @@ class ConversationDetailsActivity : SimpleActivity() {
         fun refreshCategoryLabel() {
             val manual = config.getManualCategoryForSender(sender)
             val effective = manual ?: org.fossify.messages.helpers.SmsClassifier
-                .classify(currentConversation.snippet).category
+                .classify(currentConversation.snippet, sender).category
             binding.senderCategory.text = getString(
                 R.string.sender_category_value,
                 categoryLabel(effective),
