@@ -787,6 +787,20 @@ fun Context.getSuggestedContacts(
     return contacts
 }
 
+fun Context.isSavedContactNumber(number: String): Boolean {
+    if (number.isBlank() || !hasPermission(PERMISSION_READ_CONTACTS)) {
+        return false
+    }
+
+    val uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
+    return try {
+        contentResolver.query(uri, arrayOf(PhoneLookup._ID), null, null, null)
+            ?.use { it.moveToFirst() } ?: false
+    } catch (_: SecurityException) {
+        false
+    }
+}
+
 fun Context.getNameAndPhotoFromPhoneNumber(number: String): NamePhoto {
     MessagingCache.namePhoto.get(number)?.let { return it }
     if (!hasPermission(PERMISSION_READ_CONTACTS)) {

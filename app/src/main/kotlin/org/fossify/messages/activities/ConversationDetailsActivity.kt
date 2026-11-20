@@ -30,6 +30,7 @@ import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.conversationsDB
 import org.fossify.messages.extensions.getContactFromAddress
 import org.fossify.messages.extensions.getThreadParticipants
+import org.fossify.messages.extensions.isSavedContactNumber
 import org.fossify.messages.extensions.messagesDB
 import org.fossify.messages.extensions.renameConversation
 import org.fossify.messages.extensions.startContactDetailsIntent
@@ -191,7 +192,7 @@ class ConversationDetailsActivity : SimpleActivity() {
         fun refreshCategoryLabel() {
             val manual = config.getManualCategoryForSender(sender)
             val effective = manual ?: org.fossify.messages.helpers.SmsClassifier
-                .classify(currentConversation.snippet, sender).category
+                .classify(currentConversation.snippet, sender, isSavedContactNumber(sender)).category
             binding.senderCategory.text = getString(
                 R.string.sender_category_value,
                 categoryLabel(effective),

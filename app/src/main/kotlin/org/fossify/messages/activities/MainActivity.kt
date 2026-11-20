@@ -3,8 +3,6 @@ package org.fossify.messages.activities
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
-import android.net.Uri
-import android.provider.ContactsContract
 import android.telephony.PhoneNumberUtils
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
@@ -67,6 +65,7 @@ import org.fossify.messages.extensions.conversationsDB
 import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getMessages
 import org.fossify.messages.extensions.insertOrUpdateConversation
+import org.fossify.messages.extensions.isSavedContactNumber
 import org.fossify.messages.extensions.messagesDB
 import org.fossify.messages.helpers.SmsClassifier
 import org.fossify.messages.helpers.SEARCHED_MESSAGE_ID
@@ -430,30 +429,6 @@ class MainActivity : SimpleActivity() {
                     }
                 }
             }
-        }
-    }
-
-    private fun isSavedContactNumber(number: String): Boolean {
-        val hasContactsPermission = checkSelfPermission(android.Manifest.permission.READ_CONTACTS) ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (number.isBlank() || !hasContactsPermission) {
-            return false
-        }
-
-        val lookupUri = Uri.withAppendedPath(
-            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-            Uri.encode(number)
-        )
-        return try {
-            contentResolver.query(
-                lookupUri,
-                arrayOf(ContactsContract.PhoneLookup._ID),
-                null,
-                null,
-                null
-            )?.use { it.moveToFirst() } ?: false
-        } catch (_: SecurityException) {
-            false
         }
     }
 
