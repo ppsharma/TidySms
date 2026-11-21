@@ -222,6 +222,8 @@
             android:enabled="true"
             android:exported="false" />
 
+        <receiver android:name=".receivers.CopyOtpReceiver" android:exported="false" />
+
         <receiver
             android:name=".receivers.DeleteSmsReceiver"
             android:enabled="true"
