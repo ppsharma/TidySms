@@ -102,6 +102,7 @@ class MainActivity : SimpleActivity() {
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
     @Volatile private var isClassifyingThreads = false
+    @Volatile private var isMigratingLegacyCategories = false
     private val inboxPageSize = 50
     private var inboxPageOffset = 0
     private var inboxHasMorePages = true
@@ -545,7 +546,10 @@ class MainActivity : SimpleActivity() {
                 .map { it.toConversation() }
             runOnUiThread {
                 inboxPageLoading = false
-                if (generation != inboxPageGeneration) return@runOnUiThread
+                if (generation != inboxPageGeneration) {
+                    loadInboxPage(reset = true, generation = inboxPageGeneration, updatePlaceholder = updatePlaceholder)
+                    return@runOnUiThread
+                }
                 if (reset) displayedInboxConversations.clear()
                 displayedInboxConversations.addAll(page)
                 inboxPageOffset = offset + page.size
@@ -566,6 +570,8 @@ class MainActivity : SimpleActivity() {
 
     /** Copy pre-database classifications once; subsequent classifications live with the conversation row. */
     private fun migrateLegacyInboxCategories(conversations: List<Conversation>) {
+        if (isMigratingLegacyCategories) return
+        isMigratingLegacyCategories = true
         ensureBackgroundThread {
             conversations.forEach { conversation ->
                 if (conversation.inboxCategory == null) {
@@ -582,7 +588,11 @@ class MainActivity : SimpleActivity() {
                     }
                 }
             }
-            runOnUiThread { showFilteredConversations() }
+            runOnUiThread {
+                isMigratingLegacyCategories = false
+                showFilteredConversations()
+                classifyUnclassifiedThreads(latestConversations)
+            }
         }
     }
 
@@ -591,7 +601,7 @@ class MainActivity : SimpleActivity() {
         val pending = conversations.filter {
             !it.isScheduled && !it.classificationManual && it.inboxCategory == null
         }.sortedByDescending { it.date }
-        if (pending.isEmpty() || isClassifyingThreads) return
+        if (pending.isEmpty() || isClassifyingThreads || isMigratingLegacyCategories) return
         isClassifyingThreads = true
         runOnUiThread {
             showOrHideProgress(true)
