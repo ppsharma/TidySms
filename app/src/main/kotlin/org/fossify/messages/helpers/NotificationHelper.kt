@@ -24,8 +24,11 @@ import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.shortcutHelper
 import org.fossify.messages.messaging.isShortCodeWithLetters
 import org.fossify.messages.receivers.DeleteSmsReceiver
+import org.fossify.messages.receivers.CopyOtpReceiver
 import org.fossify.messages.receivers.DirectReplyReceiver
 import org.fossify.messages.receivers.MarkAsReadReceiver
+import org.fossify.messages.helpers.OtpUtils
+import org.fossify.messages.helpers.OTP_CODE
 
 class NotificationHelper(private val context: Context) {
 
@@ -120,6 +123,13 @@ class NotificationHelper(private val context: Context) {
                 .build()
         }
 
+        val otpCode = OtpUtils.extractOtp(body)
+        val copyOtpPendingIntent = otpCode?.let { code ->
+            val copyIntent = Intent(context, CopyOtpReceiver::class.java).putExtra(OTP_CODE, code)
+            PendingIntent.getBroadcast(context, notificationId + 1, copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+
         val largeIcon = bitmap ?: if (sender != null) {
             SimpleContactsHelper(context).getContactLetterIcon(sender)
         } else {
@@ -163,13 +173,14 @@ class NotificationHelper(private val context: Context) {
             markAsReadPendingIntent
         )
             .setChannelId(notificationChannelId)
-        if (isNoReplySms) {
-            builder.addAction(
-                org.fossify.commons.R.drawable.ic_delete_vector,
-                context.getString(org.fossify.commons.R.string.delete),
-                deleteSmsPendingIntent
-            ).setChannelId(notificationChannelId)
+        if (copyOtpPendingIntent != null) {
+            builder.addAction(R.drawable.ic_copy_vector, context.getString(R.string.copy_otp), copyOtpPendingIntent)
         }
+        builder.addAction(
+            org.fossify.commons.R.drawable.ic_delete_vector,
+            context.getString(org.fossify.commons.R.string.delete),
+            deleteSmsPendingIntent
+        ).setChannelId(notificationChannelId)
 
         var shortcut = context.shortcutHelper.getShortcut(threadId)
         if (shortcut == null) {
