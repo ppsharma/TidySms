@@ -16,7 +16,7 @@ The transaction rules are retained as a baseline. Do not silently change their p
 
 ## Important status
 
-The repository does not yet contain a trained production model. Do not replace the current classifier with an unvalidated model. The 50 starter rows are synthetic development examples, not representative Indian SMS data.
+The repository does not yet contain a trained production model. Do not replace the current classifier with an unvalidated model. The 360 starter rows are authored synthetic development examples, not representative real Indian SMS data. See `data/DATASET_STATUS.md` for provenance and limitations.
 
 ## Model labels
 
