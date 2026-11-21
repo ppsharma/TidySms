@@ -43,6 +43,10 @@ object SmsClassifier {
         if (transactionHits.isNotEmpty() && transactionHits.size >= serviceHits.size) {
             return Classification(Category.TRANSACTIONS, confidence(transactionHits.size, serviceHits.size), transactionHits)
         }
+        // A clear sales/enquiry lead is promotional even when it mentions a workshop or service.
+        if (Regex("\\b(showing interest|thanks for showing interest|thank you for your interest)\\b", RegexOption.IGNORE_CASE).containsMatchIn(joined)) {
+            return Classification(Category.PROMOTIONS, 0.82f, listOf("customer acquisition"))
+        }
         if (promotionDominates || (promotionHits.isNotEmpty() && serviceHits.isEmpty())) {
             return Classification(Category.PROMOTIONS, confidence(promotionHits.size, serviceHits.size), promotionHits)
         }
