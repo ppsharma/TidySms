@@ -12,6 +12,7 @@ import org.fossify.commons.helpers.SimpleContactsHelper
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.PhoneNumber
 import org.fossify.commons.models.SimpleContact
+import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getNameFromAddress
 import org.fossify.messages.extensions.getNotificationBitmap
@@ -26,6 +27,7 @@ import org.fossify.messages.helpers.ReceiverUtils.isMessageFilteredOut
 import org.fossify.messages.helpers.refreshConversations
 import org.fossify.messages.helpers.refreshMessages
 import org.fossify.messages.models.Message
+import org.fossify.messages.helpers.OtpUtils
 
 class SmsReceiver : BroadcastReceiver() {
 
@@ -136,6 +138,7 @@ class SmsReceiver : BroadcastReceiver() {
         )
 
         context.messagesDB.insertOrUpdate(message)
+        OtpUtils.extractOtp(body)?.let { context.config.saveRecentOtp(it, senderName.ifBlank { address }, newMessageId, threadId) }
 
         if (context.shouldUnarchive()) {
             context.updateConversationArchivedStatus(threadId, false)

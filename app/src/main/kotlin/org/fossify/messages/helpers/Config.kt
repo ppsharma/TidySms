@@ -11,6 +11,12 @@ class Config(context: Context) : BaseConfig(context) {
         private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
         private const val THREAD_CATEGORY_PREFIX = "thread_category_"
         private const val THREAD_CATEGORY_MANUAL_PREFIX = "thread_category_manual_"
+        private const val RECENT_OTP = "recent_otp"
+        private const val RECENT_OTP_SENDER = "recent_otp_sender"
+        private const val RECENT_OTP_TIME = "recent_otp_time"
+        private const val RECENT_OTP_MESSAGE = "recent_otp_message"
+        private const val RECENT_OTP_THREAD = "recent_otp_thread"
+        private const val RECENT_OTP_DISMISSED = "recent_otp_dismissed"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -58,6 +64,26 @@ class Config(context: Context) : BaseConfig(context) {
             if (threadId == null || threadId !in activeThreadIds) editor.remove(key)
         }
         editor.apply()
+    }
+
+    val recentOtp: String
+        get() = prefs.getString(RECENT_OTP, "") ?: ""
+    val recentOtpSender: String
+        get() = prefs.getString(RECENT_OTP_SENDER, "") ?: ""
+    val recentOtpTime: Long
+        get() = prefs.getLong(RECENT_OTP_TIME, 0L)
+    val recentOtpMessageId: Long
+        get() = prefs.getLong(RECENT_OTP_MESSAGE, 0L)
+    val recentOtpThreadId: Long
+        get() = prefs.getLong(RECENT_OTP_THREAD, 0L)
+    var isRecentOtpDismissed: Boolean
+        get() = prefs.getBoolean(RECENT_OTP_DISMISSED, false)
+        set(value) = prefs.edit().putBoolean(RECENT_OTP_DISMISSED, value).apply()
+
+    fun saveRecentOtp(code: String, sender: String, messageId: Long, threadId: Long) {
+        prefs.edit().putString(RECENT_OTP, code).putString(RECENT_OTP_SENDER, sender)
+            .putLong(RECENT_OTP_TIME, System.currentTimeMillis()).putLong(RECENT_OTP_MESSAGE, messageId)
+            .putLong(RECENT_OTP_THREAD, threadId).putBoolean(RECENT_OTP_DISMISSED, false).apply()
     }
 
     var showCharacterCounter: Boolean

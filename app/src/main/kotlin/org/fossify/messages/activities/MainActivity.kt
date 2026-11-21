@@ -3,6 +3,9 @@ package org.fossify.messages.activities
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
+import androidx.appcompat.app.AlertDialog
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Color
@@ -67,6 +70,9 @@ import org.fossify.messages.extensions.insertOrUpdateConversation
 import org.fossify.messages.extensions.isSavedContactNumber
 import org.fossify.messages.extensions.messagesDB
 import org.fossify.messages.helpers.SmsClassifier
+import org.fossify.messages.helpers.MESSAGE_ID
+import org.fossify.messages.helpers.IS_MMS
+import org.fossify.messages.receivers.DeleteSmsReceiver
 import org.fossify.messages.helpers.SEARCHED_MESSAGE_ID
 import org.fossify.messages.helpers.THREAD_ID
 import org.fossify.messages.helpers.THREAD_TITLE
@@ -80,7 +86,7 @@ import org.greenrobot.eventbus.ThreadMode
 
 @Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
-    override var isSearchBarEnabled = true
+    override var isSearchBarEnabled = false
     
     private val MAKE_DEFAULT_APP_REQUEST = 1
 
@@ -136,6 +142,7 @@ class MainActivity : SimpleActivity() {
 
         updateTextColors(binding.mainCoordinator)
         updateInboxCategoryStyles()
+        updateRecentOtpCard()
         val currentManualCategoryState = latestConversations.map { conversation ->
             conversation.threadId to config.getCategoryForThread(conversation.threadId)?.name
         }
@@ -320,6 +327,7 @@ class MainActivity : SimpleActivity() {
             selectedCategory = categoryForViewId(checkedId) ?: SmsClassifier.Category.TRANSACTIONS
             config.selectedInboxCategory = selectedCategory!!.name
             updateInboxCategoryStyles()
+            updateRecentOtpCard()
             showFilteredConversations()
         }
         updateInboxCategoryStyles()
@@ -442,6 +450,7 @@ class MainActivity : SimpleActivity() {
             )
 
             binding.conversationsList.adapter = currAdapter
+            binding.conversationsList.itemAnimator = null
             if (areSystemAnimationsEnabled) {
                 binding.conversationsList.scheduleLayoutAnimation()
             }
@@ -465,6 +474,7 @@ class MainActivity : SimpleActivity() {
         }
 
         showFilteredConversations(updatePlaceholder = !cached)
+        updateRecentOtpCard()
     }
 
 
@@ -545,6 +555,50 @@ class MainActivity : SimpleActivity() {
                 showOrHideProgress(false)
                 showFilteredConversations()
             }
+        }
+    }
+
+    private fun updateRecentOtpCard() {
+        val card = binding.root.findViewById<android.view.View>(R.id.recent_otp_card) ?: return
+        val codeView = binding.root.findViewById<android.widget.TextView>(R.id.recent_otp_code)
+        val senderView = binding.root.findViewById<android.widget.TextView>(R.id.recent_otp_sender_time)
+        val code = config.recentOtp
+        val visible = code.isNotBlank() && !config.isRecentOtpDismissed &&
+            selectedCategory == SmsClassifier.Category.TRANSACTIONS
+        card.visibility = if (visible) android.view.View.VISIBLE else android.view.View.GONE
+        if (!visible) return
+        codeView.text = code
+        val elapsed = ((System.currentTimeMillis() - config.recentOtpTime).coerceAtLeast(0L) / 60000L)
+        val relative = when {
+            elapsed == 0L -> "Just now"
+            elapsed == 1L -> "1 min ago"
+            elapsed < 60L -> "$elapsed mins ago"
+            elapsed < 1440L -> "${elapsed / 60} hr ago"
+            else -> "${elapsed / 1440} days ago"
+        }
+        senderView.text = "${config.recentOtpSender} · $relative"
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_copy).setOnClickListener {
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("OTP", code))
+            toast(R.string.copy_otp)
+        }
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss).setOnClickListener {
+            config.isRecentOtpDismissed = true
+            updateRecentOtpCard()
+        }
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_delete).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setMessage(R.string.delete_otp_confirmation)
+                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .setPositiveButton(org.fossify.commons.R.string.delete) { _, _ ->
+                    sendBroadcast(Intent(this, DeleteSmsReceiver::class.java).apply {
+                        putExtra(THREAD_ID, config.recentOtpThreadId)
+                        putExtra(MESSAGE_ID, config.recentOtpMessageId)
+                        putExtra(IS_MMS, false)
+                    })
+                    config.isRecentOtpDismissed = true
+                    updateRecentOtpCard()
+                }.show()
         }
     }
 
