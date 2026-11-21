@@ -27,7 +27,7 @@ object SmsClassifier {
     /** Recent messages are considered together; the caller supplies newest-first or oldest-first samples. */
     fun classifyThread(messages: List<String>, sender: String, isSavedContact: Boolean = false): Classification {
         val texts = messages.filter { it.isNotBlank() }.takeLast(7)
-        if (isSavedContact || isRegularPhoneNumber(sender)) return result(Category.PERSONAL, "regular phone number")
+        if (isSavedContact) return result(Category.PERSONAL, "saved contact")
         if (texts.isEmpty()) return result(Category.UNCATEGORISED, "no message content", 0.0f)
 
         val header = headerType(sender)
@@ -57,6 +57,7 @@ object SmsClassifier {
         if (personalHits.size >= 2 || personalConversation.containsMatchIn(joined)) {
             return Classification(Category.PERSONAL, 0.72f, personalHits.ifEmpty { listOf("conversational phrase") })
         }
+        if (isRegularPhoneNumber(sender)) return result(Category.PERSONAL, "regular phone number")
         return Classification(Category.UNCATEGORISED, 0.35f, emptyList())
     }
 
