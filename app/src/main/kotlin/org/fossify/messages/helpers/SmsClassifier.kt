@@ -3,6 +3,7 @@ package org.fossify.messages.helpers
 /** Offline, thread-level SMS classification. No network calls or sender directory are used. */
 @Suppress("MaxLineLength", "MagicNumber")
 object SmsClassifier {
+    const val CLASSIFIER_VERSION = 1
     enum class Category { PERSONAL, TRANSACTIONS, SERVICES, PROMOTIONS, UNCATEGORISED }
     enum class HeaderType { PROMOTIONAL, TRANSACTIONAL, SERVICE, GOVERNMENT, UNKNOWN }
     data class Classification(val category: Category, val confidence: Float, val matchedSignals: List<String>)

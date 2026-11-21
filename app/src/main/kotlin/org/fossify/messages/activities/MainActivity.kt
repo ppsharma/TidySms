@@ -15,6 +15,10 @@ import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import org.fossify.messages.workers.InboxClassificationWorker
 import android.provider.Telephony
 import android.text.TextUtils
 import androidx.appcompat.content.res.AppCompatResources
@@ -102,7 +106,6 @@ class MainActivity : SimpleActivity() {
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
     @Volatile private var isClassifyingThreads = false
-    @Volatile private var isMigratingLegacyCategories = false
     private val inboxPageSize = 50
     private var inboxPageOffset = 0
     private var inboxHasMorePages = true
@@ -484,7 +487,6 @@ class MainActivity : SimpleActivity() {
     ) {
         latestConversations = ArrayList(conversations)
         hasLoadedConversations = true
-        migrateLegacyInboxCategories(conversations)
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the
             // loading placeholder and progress until we are done loading from telephony
@@ -522,7 +524,7 @@ class MainActivity : SimpleActivity() {
 
     private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
         lastRenderedManualCategoryState = latestConversations.map {
-            it.threadId to (it.inboxCategory ?: config.getCategoryForThread(it.threadId)?.name)
+            it.threadId to it.inboxCategory
         }
         inboxPageGeneration++
         inboxPageOffset = 0
@@ -568,77 +570,25 @@ class MainActivity : SimpleActivity() {
         }
     }
 
-    /** Copy pre-database classifications once; subsequent classifications live with the conversation row. */
-    private fun migrateLegacyInboxCategories(conversations: List<Conversation>) {
-        if (isMigratingLegacyCategories) return
-        isMigratingLegacyCategories = true
-        ensureBackgroundThread {
-            conversations.forEach { conversation ->
-                if (conversation.inboxCategory == null) {
-                    val legacy = config.getCategoryForThread(conversation.threadId)
-                    if (legacy != null) {
-                        val manual = config.isManualCategoryForThread(conversation.threadId)
-                        conversationsDB.updateInboxClassification(
-                            conversation.threadId, legacy.name, manual, 1, 1.0f
-                        )
-                        conversation.inboxCategory = legacy.name
-                        conversation.classificationManual = manual
-                        conversation.classifierVersion = 1
-                        conversation.classificationConfidence = 1.0f
-                    }
-                }
-            }
-            runOnUiThread {
-                isMigratingLegacyCategories = false
-                showFilteredConversations()
-                classifyUnclassifiedThreads(latestConversations)
-            }
-        }
-    }
-
-    /** Initial on-device classification; existing manual choices are never overwritten. */
+    /** Schedule persistent background initialization; WorkManager resumes after process death. */
     private fun classifyUnclassifiedThreads(conversations: List<Conversation>) {
-        val pending = conversations.filter {
-            !it.isScheduled && !it.classificationManual && it.inboxCategory == null
-        }.sortedByDescending { it.date }
-        if (pending.isEmpty() || isClassifyingThreads || isMigratingLegacyCategories) return
-        isClassifyingThreads = true
-        runOnUiThread {
-            showOrHideProgress(true)
-        }
-        ensureBackgroundThread {
-            val total = pending.size
-            pending.forEachIndexed { index, conversation ->
-                val sample = runCatching {
-                    getMessages(
-                        threadId = conversation.threadId,
-                        includeScheduledMessages = false,
-                        limit = 7
-                    )
-                }.getOrDefault(arrayListOf())
-                val classification = SmsClassifier.classifyThread(
-                    messages = sample.filter { it.isReceivedMessage() }.map { it.body }
-                        .ifEmpty { sample.map { it.body } },
-                    sender = conversation.phoneNumber,
-                    isSavedContact = isSavedContactNumber(conversation.phoneNumber)
-                )
-                conversationsDB.updateInboxClassification(
-                    conversation.threadId, classification.category.name, false, 1, classification.confidence
-                )
-                conversation.inboxCategory = classification.category.name
-                conversation.classifierVersion = 1
-                conversation.classificationConfidence = classification.confidence
-                if ((index + 1) % 25 == 0 || index == total - 1) {
-                    config.inboxInitializationProcessed = index + 1
-                    config.inboxInitializationTotal = total
-                }
+        if (conversations.none {
+                !it.isScheduled && (it.inboxCategory == null ||
+                    (!it.classificationManual && it.classifierVersion < SmsClassifier.CLASSIFIER_VERSION))
             }
-            runOnUiThread {
-                isClassifyingThreads = false
-                showOrHideProgress(false)
-                showFilteredConversations()
-            }
-        }
+        ) return
+        val request = OneTimeWorkRequestBuilder<InboxClassificationWorker>()
+            .setBackoffCriteria(
+                androidx.work.BackoffPolicy.LINEAR,
+                10,
+                java.util.concurrent.TimeUnit.SECONDS
+            )
+            .build()
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+            InboxClassificationWorker.UNIQUE_WORK_NAME,
+            ExistingWorkPolicy.KEEP,
+            request
+        )
     }
 
     private fun updateRecentOtpCard() {
