@@ -418,6 +418,8 @@ class MainActivity : SimpleActivity() {
                 }
             }
 
+            config.pruneThreadCategories(cachedConversations.map { it.threadId }.toSet())
+
             val allConversations = ArrayList(conversationsDB.getNonArchived())
             runOnUiThread {
                 setupConversations(allConversations)
