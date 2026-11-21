@@ -63,11 +63,14 @@ def main() -> None:
 
     from mediapipe_model_maker import text_classifier
 
+    csv_params = text_classifier.CSVParams(
+        text_column="text", label_column="label"
+    )
     train_data = text_classifier.Dataset.from_csv(
-        filename=str(train_path), text_column="text", label_column="label"
+        filename=str(train_path), csv_params=csv_params
     )
     validation_data = text_classifier.Dataset.from_csv(
-        filename=str(validation_path), text_column="text", label_column="label"
+        filename=str(validation_path), csv_params=csv_params
     )
     model_options = text_classifier.TextClassifierOptions(
         supported_model=text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER,
