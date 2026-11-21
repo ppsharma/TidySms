@@ -1,4 +1,4 @@
-name: TidySMS Phase 1 validation
+name: TidySms Phase 2 validation
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
     branches:
       - development/phase-1-intelligent-inbox
       - development/phase-1-thread-classification
+      - development/phase-2-inbox-otp-notifications
 
 permissions:
   contents: read
