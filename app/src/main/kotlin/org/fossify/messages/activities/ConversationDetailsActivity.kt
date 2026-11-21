@@ -1,5 +1,6 @@
 package org.fossify.messages.activities
 
+import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
@@ -21,6 +22,7 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.SimpleContact
+import org.fossify.messages.R
 import org.fossify.messages.adapters.ContactsAdapter
 import org.fossify.messages.databinding.ActivityConversationDetailsBinding
 import org.fossify.messages.dialogs.RenameConversationDialog
@@ -63,6 +65,7 @@ class ConversationDetailsActivity : SimpleActivity() {
             }
             runOnUiThread {
                 setupTextViews()
+                setupSenderCategory()
                 setupParticipants()
                 setupCustomNotifications()
             }
@@ -78,7 +81,8 @@ class ConversationDetailsActivity : SimpleActivity() {
         arrayOf(
             binding.notificationsHeading,
             binding.conversationNameHeading,
-            binding.membersHeading
+            binding.membersHeading,
+            binding.senderCategoryHeading
         ).forEach {
             it.setTextColor(primaryColor)
         }
@@ -161,6 +165,58 @@ class ConversationDetailsActivity : SimpleActivity() {
                     }
                 }
             }
+        }
+    }
+
+
+    private fun setupSenderCategory() {
+        val currentConversation = conversation ?: return
+        val id = currentConversation.threadId
+        fun categoryLabel(category: org.fossify.messages.helpers.SmsClassifier.Category?): String =
+            when (category) {
+                org.fossify.messages.helpers.SmsClassifier.Category.TRANSACTIONS -> getString(R.string.category_transactions)
+                org.fossify.messages.helpers.SmsClassifier.Category.SERVICES -> getString(R.string.category_services)
+                org.fossify.messages.helpers.SmsClassifier.Category.PROMOTIONS -> getString(R.string.category_promotions)
+                org.fossify.messages.helpers.SmsClassifier.Category.PERSONAL -> getString(R.string.category_personal)
+                org.fossify.messages.helpers.SmsClassifier.Category.UNCATEGORISED -> getString(R.string.category_uncategorised)
+                null -> getString(R.string.category_automatic)
+            }
+
+        fun refreshCategoryLabel() {
+            val category = config.getCategoryForThread(id)
+            val manual = config.isManualCategoryForThread(id)
+            binding.senderCategory.text = getString(
+                R.string.sender_category_value,
+                categoryLabel(category),
+                if (manual) getString(R.string.category_manual) else getString(R.string.category_automatic)
+            )
+        }
+
+        refreshCategoryLabel()
+        binding.senderCategory.setOnClickListener {
+            val categories = arrayOf(
+                getString(R.string.category_automatic),
+                getString(R.string.category_transactions),
+                getString(R.string.category_services),
+                getString(R.string.category_promotions),
+                getString(R.string.category_personal),
+                getString(R.string.category_uncategorised)
+            )
+            val values = arrayOf(
+                null,
+                org.fossify.messages.helpers.SmsClassifier.Category.TRANSACTIONS,
+                org.fossify.messages.helpers.SmsClassifier.Category.SERVICES,
+                org.fossify.messages.helpers.SmsClassifier.Category.PROMOTIONS,
+                org.fossify.messages.helpers.SmsClassifier.Category.PERSONAL,
+                org.fossify.messages.helpers.SmsClassifier.Category.UNCATEGORISED
+            )
+            AlertDialog.Builder(this)
+                .setTitle(R.string.sender_category)
+                .setItems(categories) { _, which ->
+                    config.setManualCategoryForThread(id, values[which])
+                    refreshCategoryLabel()
+                }
+                .show()
         }
     }
 

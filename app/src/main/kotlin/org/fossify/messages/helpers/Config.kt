@@ -5,8 +5,13 @@ import org.fossify.commons.helpers.BaseConfig
 import org.fossify.messages.extensions.getDefaultKeyboardHeight
 import org.fossify.messages.models.Conversation
 
+@Suppress("TooManyFunctions")
 class Config(context: Context) : BaseConfig(context) {
     companion object {
+        private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
+        private const val THREAD_CATEGORY_PREFIX = "thread_category_"
+        private const val THREAD_CATEGORY_MANUAL_PREFIX = "thread_category_manual_"
+
         fun newInstance(context: Context) = Config(context)
     }
 
@@ -15,6 +20,45 @@ class Config(context: Context) : BaseConfig(context) {
     }
 
     fun getUseSIMIdAtNumber(number: String) = prefs.getInt(USE_SIM_ID_PREFIX + number, 0)
+
+    var selectedInboxCategory: String
+        get() = prefs.getString(SELECTED_INBOX_CATEGORY, "TRANSACTIONS") ?: "TRANSACTIONS"
+        set(value) = prefs.edit().putString(SELECTED_INBOX_CATEGORY, value).apply()
+
+    fun getCategoryForThread(threadId: Long): SmsClassifier.Category? {
+        val stored = prefs.getString(THREAD_CATEGORY_PREFIX + threadId, null) ?: return null
+        return runCatching { SmsClassifier.Category.valueOf(stored) }.getOrNull()
+    }
+
+    fun setCategoryForThread(threadId: Long, category: SmsClassifier.Category) {
+        prefs.edit().putString(THREAD_CATEGORY_PREFIX + threadId, category.name).apply()
+    }
+
+    fun isManualCategoryForThread(threadId: Long): Boolean =
+        prefs.getBoolean(THREAD_CATEGORY_MANUAL_PREFIX + threadId, false)
+
+    fun setManualCategoryForThread(threadId: Long, category: SmsClassifier.Category?) {
+        prefs.edit().apply {
+            if (category == null) {
+                remove(THREAD_CATEGORY_PREFIX + threadId)
+                remove(THREAD_CATEGORY_MANUAL_PREFIX + threadId)
+            } else {
+                putString(THREAD_CATEGORY_PREFIX + threadId, category.name)
+                putBoolean(THREAD_CATEGORY_MANUAL_PREFIX + threadId, true)
+            }
+        }.apply()
+    }
+
+    fun pruneThreadCategories(activeThreadIds: Set<Long>) {
+        val editor = prefs.edit()
+        prefs.all.keys.filter {
+            it.startsWith(THREAD_CATEGORY_PREFIX) || it.startsWith(THREAD_CATEGORY_MANUAL_PREFIX)
+        }.forEach { key ->
+            val threadId = key.substringAfterLast('_').toLongOrNull()
+            if (threadId == null || threadId !in activeThreadIds) editor.remove(key)
+        }
+        editor.apply()
+    }
 
     var showCharacterCounter: Boolean
         get() = prefs.getBoolean(SHOW_CHARACTER_COUNTER, false)
