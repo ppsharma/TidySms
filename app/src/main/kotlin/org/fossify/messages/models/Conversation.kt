@@ -19,22 +19,27 @@ data class Conversation(
     @ColumnInfo(name = "uses_custom_title") var usesCustomTitle: Boolean = false,
     @ColumnInfo(name = "archived") var isArchived: Boolean = false,
     @ColumnInfo(name = "unread_count") var unreadCount: Int = 0,
+    @ColumnInfo(name = "inbox_category") var inboxCategory: String? = null,
+    @ColumnInfo(name = "classification_manual") var classificationManual: Boolean = false,
+    @ColumnInfo(name = "classifier_version") var classifierVersion: Int = 0,
+    @ColumnInfo(name = "classification_confidence") var classificationConfidence: Float = 0f,
 ) {
-
     companion object {
-        fun areItemsTheSame(old: Conversation, new: Conversation): Boolean {
-            return old.threadId == new.threadId
-        }
+        fun areItemsTheSame(old: Conversation, new: Conversation): Boolean =
+            old.threadId == new.threadId
 
-        fun areContentsTheSame(old: Conversation, new: Conversation): Boolean {
-            return old.snippet == new.snippet &&
+        fun areContentsTheSame(old: Conversation, new: Conversation): Boolean =
+            old.snippet == new.snippet &&
                 old.date == new.date &&
                 old.read == new.read &&
                 old.title == new.title &&
                 old.photoUri == new.photoUri &&
                 old.isGroupConversation == new.isGroupConversation &&
                 old.phoneNumber == new.phoneNumber &&
-                old.unreadCount == new.unreadCount
-        }
+                old.unreadCount == new.unreadCount &&
+                old.inboxCategory == new.inboxCategory &&
+                old.classificationManual == new.classificationManual &&
+                old.classifierVersion == new.classifierVersion &&
+                old.classificationConfidence == new.classificationConfidence
     }
 }
