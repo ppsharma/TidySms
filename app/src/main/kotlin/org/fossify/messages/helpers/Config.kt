@@ -66,11 +66,16 @@ class Config(context: Context) : BaseConfig(context) {
         editor.apply()
     }
 
-    var recentOtp: String get() = prefs.getString(RECENT_OTP, "") ?: ""
-    var recentOtpSender: String get() = prefs.getString(RECENT_OTP_SENDER, "") ?: ""
-    var recentOtpTime: Long get() = prefs.getLong(RECENT_OTP_TIME, 0L)
-    var recentOtpMessageId: Long get() = prefs.getLong(RECENT_OTP_MESSAGE, 0L)
-    var recentOtpThreadId: Long get() = prefs.getLong(RECENT_OTP_THREAD, 0L)
+    val recentOtp: String
+        get() = prefs.getString(RECENT_OTP, "") ?: ""
+    val recentOtpSender: String
+        get() = prefs.getString(RECENT_OTP_SENDER, "") ?: ""
+    val recentOtpTime: Long
+        get() = prefs.getLong(RECENT_OTP_TIME, 0L)
+    val recentOtpMessageId: Long
+        get() = prefs.getLong(RECENT_OTP_MESSAGE, 0L)
+    val recentOtpThreadId: Long
+        get() = prefs.getLong(RECENT_OTP_THREAD, 0L)
     var isRecentOtpDismissed: Boolean
         get() = prefs.getBoolean(RECENT_OTP_DISMISSED, false)
         set(value) = prefs.edit().putBoolean(RECENT_OTP_DISMISSED, value).apply()
