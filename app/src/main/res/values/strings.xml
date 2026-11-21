@@ -4,7 +4,7 @@
     <string name="category_automatic">Automatic</string>
     <string name="category_manual">Manual</string>
     <string name="sender_category_value">%1$s · %2$s</string>
-    <string name="messages_title">TidySms</string>
+    <string name="messages_title">Messages</string>
     <string name="category_transactions">Transactions</string>
     <string name="category_services">Services</string>
     <string name="category_promotions">Promotions</string>
