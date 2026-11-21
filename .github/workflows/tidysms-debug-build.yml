@@ -7,6 +7,7 @@ on:
       - development/phase-1-intelligent-inbox
       - development/phase-1-thread-classification
       - development/phase-2-inbox-otp-notifications
+      - development/inbox-intelligence-initialization
 
 permissions:
   contents: read
