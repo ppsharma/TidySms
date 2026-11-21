@@ -80,7 +80,7 @@ import org.greenrobot.eventbus.ThreadMode
 
 @Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
-    override var isSearchBarEnabled = true
+    override var isSearchBarEnabled = false
     
     private val MAKE_DEFAULT_APP_REQUEST = 1
 
@@ -442,6 +442,7 @@ class MainActivity : SimpleActivity() {
             )
 
             binding.conversationsList.adapter = currAdapter
+            binding.conversationsList.itemAnimator = null
             if (areSystemAnimationsEnabled) {
                 binding.conversationsList.scheduleLayoutAnimation()
             }
