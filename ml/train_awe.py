@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train the TidySms five-label Average Word Embedding text classifier."""
+"""Train the TidySms three-label non-transaction AWE text classifier."""
 
 from __future__ import annotations
 
