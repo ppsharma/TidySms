@@ -1,6 +1,13 @@
 package org.fossify.messages.workers
 
 import android.content.Context
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import org.fossify.messages.R
+import org.fossify.messages.activities.MainActivity
 import androidx.work.Data
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -21,6 +28,7 @@ class InboxClassificationWorker(
 
     override fun doWork(): Result {
         applicationContext.config.inboxInitializationComplete = false
+        postInitializationNotification(0, 0, completed = false)
         val database = applicationContext.conversationsDB
         val conversations = database.getNonArchived().filter { !it.isScheduled }
         val total = conversations.size
@@ -51,6 +59,7 @@ class InboxClassificationWorker(
         applicationContext.config.inboxInitializationTotal = total
         applicationContext.config.inboxInitializationProcessed = processedBefore
         setProgressAsync(progressData(processedBefore, total))
+        postInitializationNotification(processedBefore, total, completed = false)
 
         batch.forEachIndexed { index, conversation ->
             if (isStopped) return Result.retry()
@@ -79,6 +88,7 @@ class InboxClassificationWorker(
             if ((index + 1) % PROGRESS_UPDATE_INTERVAL == 0 || index == batch.lastIndex) {
                 applicationContext.config.inboxInitializationProcessed = processed
                 setProgressAsync(progressData(processed, total))
+                postInitializationNotification(processed, total, completed = false)
             }
         }
 
@@ -86,8 +96,42 @@ class InboxClassificationWorker(
             Result.retry()
         } else {
             applicationContext.config.inboxInitializationComplete = true
+            postInitializationNotification(total, total, completed = true)
             Result.success()
         }
+    }
+
+    private fun postInitializationNotification(processed: Int, total: Int, completed: Boolean) {
+        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(
+                NotificationChannel(INITIALIZATION_CHANNEL, applicationContext.getString(R.string.inbox_initialization_channel), NotificationManager.IMPORTANCE_LOW)
+            )
+        }
+        val launchIntent = applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
+        val pendingIntent = launchIntent?.let {
+            PendingIntent.getActivity(applicationContext, INITIALIZATION_NOTIFICATION_ID, it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+        val title = applicationContext.getString(
+            if (completed) R.string.inbox_initialization_complete else R.string.inbox_initialization_title
+        )
+        val text = if (completed) applicationContext.getString(R.string.inbox_initialization_done, total)
+            else if (total > 0) applicationContext.getString(R.string.organizing_conversations_progress, processed, total)
+            else applicationContext.getString(R.string.organizing_conversations)
+        val notification = NotificationCompat.Builder(applicationContext, INITIALIZATION_CHANNEL)
+            .setSmallIcon(R.drawable.ic_messenger)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(pendingIntent)
+            .setOnlyAlertOnce(true)
+            .setOngoing(!completed)
+            .setProgress(total.coerceAtLeast(0), processed.coerceAtLeast(0), total <= 0)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setAutoCancel(completed)
+            .build()
+        manager.notify(INITIALIZATION_NOTIFICATION_ID, notification)
     }
 
     private fun progressData(processed: Int, total: Int) = Data.Builder()
@@ -99,6 +143,8 @@ class InboxClassificationWorker(
         const val UNIQUE_WORK_NAME = "tidysms_inbox_initialization"
         const val KEY_PROCESSED = "processed_threads"
         const val KEY_TOTAL = "total_threads"
+        private const val INITIALIZATION_CHANNEL = "tidysms_inbox_initialization"
+        private const val INITIALIZATION_NOTIFICATION_ID = 72041
         private const val MAX_THREADS_PER_RUN = 100
         private const val RECENT_MESSAGES_PER_THREAD = 7
         private const val PROGRESS_UPDATE_INTERVAL = 10

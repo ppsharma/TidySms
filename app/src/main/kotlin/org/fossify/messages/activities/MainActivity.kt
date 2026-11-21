@@ -12,6 +12,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -638,6 +639,32 @@ class MainActivity : SimpleActivity() {
             selectedCategory == SmsClassifier.Category.TRANSACTIONS
         card.visibility = if (visible) android.view.View.VISIBLE else android.view.View.GONE
         if (!visible) return
+        val primary = getProperPrimaryColor()
+        val surface = getProperBackgroundColor()
+        val mix = 0.10f
+        val cardColor = Color.rgb(
+            (Color.red(surface) * (1f - mix) + Color.red(primary) * mix).toInt(),
+            (Color.green(surface) * (1f - mix) + Color.green(primary) * mix).toInt(),
+            (Color.blue(surface) * (1f - mix) + Color.blue(primary) * mix).toInt()
+        )
+        card.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 20f * resources.displayMetrics.density
+            setColor(cardColor)
+            setStroke((resources.displayMetrics.density).toInt().coerceAtLeast(1), primary.adjustAlpha(0.45f))
+        }
+        codeView.setTextColor(getProperTextColor())
+        senderView.setTextColor(getProperTextColor().adjustAlpha(0.78f))
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_copy).apply {
+            setOnClickListener {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("OTP", code))
+                toast(R.string.copy_otp)
+            }
+            (this as? android.widget.TextView)?.setTextColor(primary)
+        }
+        (binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss) as? android.widget.TextView)?.setTextColor(getProperTextColor())
+        (binding.root.findViewById<android.view.View>(R.id.recent_otp_delete) as? android.widget.TextView)?.setTextColor(getProperTextColor())
         codeView.text = code
         val elapsed = ((System.currentTimeMillis() - config.recentOtpTime).coerceAtLeast(0L) / 60000L)
         val relative = when {
@@ -648,11 +675,6 @@ class MainActivity : SimpleActivity() {
             else -> "${elapsed / 1440} days ago"
         }
         senderView.text = "${config.recentOtpSender} · $relative"
-        binding.root.findViewById<android.view.View>(R.id.recent_otp_copy).setOnClickListener {
-            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("OTP", code))
-            toast(R.string.copy_otp)
-        }
         binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss).setOnClickListener {
             config.isRecentOtpDismissed = true
             updateRecentOtpCard()

@@ -234,6 +234,18 @@ class SmsClassifierTest {
         ), "QP-RJPUCC").category)
     }
 
+    
+    @Test fun otpExtractorFindsCommonOtpPhrasings() {
+        assertEquals("482913", org.fossify.messages.helpers.OtpUtils.extractOtp("Your OTP is 482913"))
+        assertEquals("123456", org.fossify.messages.helpers.OtpUtils.extractOtp("Use 123456 as your OTP"))
+        assertEquals("765432", org.fossify.messages.helpers.OtpUtils.extractOtp("Your verification code: 765432"))
+    }
+
+    @Test fun otpExtractorDoesNotTreatInvoiceOrMoneyAsOtp() {
+        assertEquals(null, org.fossify.messages.helpers.OtpUtils.extractOtp("Invoice No. 2022-23-1782 created for Rs. 23600"))
+        assertEquals(null, org.fossify.messages.helpers.OtpUtils.extractOtp("Your balance is Rs 123456"))
+    }
+
     @Test fun bankOtpRemainsTransaction() {
         assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify("Your bank OTP is 123456", "AD-BANK").category)
     }
