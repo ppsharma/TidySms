@@ -20,6 +20,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <HorizontalScrollView
+            android:id="@+id/inbox_category_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/small_margin"
@@ -102,7 +103,7 @@
 
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:id="@+id/main_coordinator_wrapper"
-            android:layout_below="@id/inbox_category_group"
+            android:layout_below="@id/inbox_category_scroll"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
