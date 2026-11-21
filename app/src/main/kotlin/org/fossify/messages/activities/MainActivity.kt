@@ -534,7 +534,7 @@ class MainActivity : SimpleActivity() {
                     )
                 }.getOrDefault(arrayListOf())
                 val classification = SmsClassifier.classifyThread(
-                    messages = sample.map { it.body },
+                    messages = sample.filter { it.isReceivedMessage() }.map { it.body }.ifEmpty { sample.map { it.body } },
                     sender = conversation.phoneNumber,
                     isSavedContact = isSavedContactNumber(conversation.phoneNumber)
                 )
