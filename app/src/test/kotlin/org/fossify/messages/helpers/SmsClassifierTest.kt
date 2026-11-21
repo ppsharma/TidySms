@@ -163,6 +163,77 @@ class SmsClassifierTest {
         ).category)
     }
 
+
+    @Test fun ayurvedicWeightLossMessageIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "Wajan Ghataye Umar Badaaye Keval 90 Dino Me 35 Kilo Tak Wajan Ghataye Warna Paise Wapis Paaye Govt. Approved 100% Ayurved Treatment",
+            "BZ-ITNDIA"
+        ).category)
+    }
+
+    @Test fun kotakLifePolicyIssuanceIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Welcome to the Kotak Life Insurance family. Your policy 75563235 has been issued. An electronic copy of this policy has been emailed to you.",
+            "JD-KOTAKL"
+        ).category)
+    }
+
+    @Test fun kotakPolicyServicingInstructionsAreService() {
+        assertEquals(SmsClassifier.Category.SERVICES, SmsClassifier.classify(
+            "You can now use our latest servicing modes to manage your policy: WhatsApp, chat with Kaya, or visit the online policy manager.",
+            "JD-KOTAKL"
+        ).category)
+    }
+
+    @Test fun resolvedHaierServiceRequestIsService() {
+        assertEquals(SmsClassifier.Category.SERVICES, SmsClassifier.classify(
+            "Your request ID AH20221024000026 is resolved. For further assistance please visit service support or call.",
+            "VM-eHaier"
+        ).category)
+    }
+
+    @Test fun invoiceCreatedByVendorIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Your Invoice No. 2022-23-1782 created by Charmeuse Technologies Pvt Ltd of Rs. 23600 - VastraApp",
+            "AD-VTRAPP"
+        ).category)
+    }
+
+    @Test fun cryptoRiskDisclaimerIsService() {
+        assertEquals(SmsClassifier.Category.SERVICES, SmsClassifier.classify(
+            "Disclaimer: Crypto & NFTs are unregulated and can be highly risky. There may be no regulatory recourse for any loss from such transactions. CoinSwitch PRO",
+            "TXCKUBER"
+        ).category)
+    }
+
+    @Test fun insurancePolicyCopyConfirmationIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Thank you for choosing Reliance DOMESTIC policy 920292028342273376. For policy copy, please click.",
+            "JXRELGEN"
+        ).category)
+    }
+
+    @Test fun incomeTaxTdsAnd26AsNoticeIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Total TDS by Employer of PAN GUKXXXXXX9F for Qtr ending Jun 30 is Rs 0 and cumulative TDS for FY 20-21 is Rs 0. View 26AS for details.",
+            "VM-ITDEFL"
+        ).category)
+    }
+
+    @Test fun vehicleWarrantyExtensionIsService() {
+        assertEquals(SmsClassifier.Category.SERVICES, SmsClassifier.classify(
+            "If your two wheeler expiry date of free service, warranty and extended warranty lies between 15/03/2020 to 31/05/2020 has been extended to 31/07/2020.",
+            "BH-EHONDA"
+        ).category)
+    }
+
+    @Test fun pucPassedAndExpiryRemindersAreServices() {
+        assertEquals(SmsClassifier.Category.SERVICES, SmsClassifier.classifyThread(listOf(
+            "Vehicle GJ18AH8613 has passed emission test. Certificate no D31RJ38101705 valid till 14-08-2020. Rs.100 charged for PUC test. Transport Deptt, Rajasthan.",
+            "Reminder: PUC certificate of vehicle GJ18AH8613 will expire on 14 Aug 2020, kindly get it renewed before expiry."
+        ), "QP-RJPUCC").category)
+    }
+
     @Test fun bankOtpRemainsTransaction() {
         assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify("Your bank OTP is 123456", "AD-BANK").category)
     }
