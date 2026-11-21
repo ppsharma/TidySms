@@ -42,6 +42,10 @@ class SmsClassifierTest {
         assertEquals(SmsClassifier.Category.SERVICES, SmsClassifier.classify("Your parcel is out for delivery today", "AD-COURIER").category)
     }
 
+    @Test fun mobileNumberPromotionalMessageIsStillPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify("Special offer! Get 40% discount, shop now", "9876543210").category)
+    }
+
     @Test fun regularMobileNumberIsPersonal() {
         assertEquals(SmsClassifier.Category.PERSONAL, SmsClassifier.classify("Please call me", "9876543210").category)
     }
