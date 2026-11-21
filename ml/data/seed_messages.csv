@@ -1,14 +1,4 @@
 text,label,source
-"Your account has been credited with INR 2500.00. Available balance is INR 12500.00.",TRANSACTIONS,synthetic
-"Rs 840.00 has been debited from your account for UPI transaction.",TRANSACTIONS,synthetic
-"Your credit card statement is generated. Total amount due is Rs 3200.",TRANSACTIONS,synthetic
-"UPI payment of Rs 450 to merchant was successful.",TRANSACTIONS,synthetic
-"Your electricity bill payment of Rs 1800 has been received.",TRANSACTIONS,synthetic
-"OTP 482193 is your verification code. Do not share it with anyone.",TRANSACTIONS,synthetic
-"Your EMI payment is due on 5 December. Pay now to avoid charges.",TRANSACTIONS,synthetic
-"Refund of Rs 799 has been processed to your original payment method.",TRANSACTIONS,synthetic
-"Your GST payment challan has been generated successfully.",TRANSACTIONS,synthetic
-"FASTag transaction: Rs 95 deducted. Remaining balance Rs 405.",TRANSACTIONS,synthetic
 "Your order has been shipped. Track your parcel using the link below.",SERVICES,synthetic
 "Thank you for contacting support. Our team will get back to you within two working days.",SERVICES,synthetic
 "Your service request has been registered. Reference number SR12345.",SERVICES,synthetic
@@ -39,13 +29,3 @@ text,label,source
 "I am on my way and should reach in ten minutes.",PERSONAL,synthetic
 "Please let me know when you are free.",PERSONAL,synthetic
 "Thanks for helping yesterday. See you soon.",PERSONAL,synthetic
-"Your request has been received.",UNCATEGORISED,synthetic
-"Thank you for your message.",UNCATEGORISED,synthetic
-"Please check the details and confirm.",UNCATEGORISED,synthetic
-"Reference 78291 has been updated.",UNCATEGORISED,synthetic
-"Your account details are ready.",UNCATEGORISED,synthetic
-"An update is available. Please review it.",UNCATEGORISED,synthetic
-"Your application has been received.",UNCATEGORISED,synthetic
-"Please contact us for more information.",UNCATEGORISED,synthetic
-"Message received successfully.",UNCATEGORISED,synthetic
-"Your code is 123456.",UNCATEGORISED,synthetic

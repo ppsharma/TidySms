@@ -25,6 +25,28 @@ object SmsClassifier {
     fun classify(body: String, sender: String, isSavedContact: Boolean): Classification =
         classifyThread(listOf(body), sender, isSavedContact)
 
+    /**
+     * Runs only the existing transaction rules. A null result means the SMS should
+     * continue to the non-transaction classifier; transaction regexes remain the
+     * established baseline rather than being learned again by the ML model.
+     */
+    fun classifyTransaction(messages: List<String>, sender: String, isSavedContact: Boolean = false): Classification? {
+        if (isSavedContact) return null
+        val texts = messages.filter { it.isNotBlank() }.takeLast(7)
+        if (texts.isEmpty()) return null
+        val joined = texts.joinToString(" ")
+        val transactionHits = matchingSignals(transactionSignals, joined)
+        val serviceHits = matchingSignals(serviceSignals, joined)
+        if (transactionHits.isNotEmpty() && transactionHits.size >= serviceHits.size) {
+            return Classification(Category.TRANSACTIONS, confidence(transactionHits.size, serviceHits.size), transactionHits)
+        }
+        val promotionHits = matchingSignals(promotionSignals, joined)
+        if (promotionHits.isNotEmpty() || serviceHits.isNotEmpty()) return null
+        return if (headerType(sender) == HeaderType.TRANSACTIONAL || headerType(sender) == HeaderType.GOVERNMENT) {
+            result(Category.TRANSACTIONS, "TRAI header -T/G")
+        } else null
+    }
+
     /** Recent messages are considered together; the caller supplies newest-first or oldest-first samples. */
     fun classifyThread(messages: List<String>, sender: String, isSavedContact: Boolean = false): Classification {
         val texts = messages.filter { it.isNotBlank() }.takeLast(7)

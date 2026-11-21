@@ -69,6 +69,26 @@ class SmsClassifierTest {
         assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classifyThread(messages, "AD-BANK-T").category)
     }
 
+    @Test fun transactionOnlyClassifierKeepsBankDebitInRules() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS,
+            SmsClassifier.classifyTransaction(listOf("INR 500 debited from your bank account"), "AD-BANK")?.category)
+    }
+
+    @Test fun transactionOnlyClassifierLeavesPromotionForMl() {
+        assertEquals(null,
+            SmsClassifier.classifyTransaction(listOf("Exclusive offer: get 30% discount, shop now"), "AD-BANK-T"))
+    }
+
+    @Test fun transactionOnlyClassifierLeavesServiceForMl() {
+        assertEquals(null,
+            SmsClassifier.classifyTransaction(listOf("Your parcel is out for delivery"), "AD-COURIER"))
+    }
+
+    @Test fun transactionOnlyClassifierRespectsSavedContact() {
+        assertEquals(null,
+            SmsClassifier.classifyTransaction(listOf("Your account was debited"), "9876543210", true))
+    }
+
     @Test fun bankOtpRemainsTransaction() {
         assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify("Your bank OTP is 123456", "AD-BANK").category)
     }

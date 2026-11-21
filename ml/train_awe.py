@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-LABELS = ["PERSONAL", "TRANSACTIONS", "SERVICES", "PROMOTIONS", "UNCATEGORISED"]
+LABELS = ["PERSONAL", "SERVICES", "PROMOTIONS"]
 MIN_EXAMPLES_PER_LABEL = 100
 
 
@@ -44,7 +44,7 @@ def load_dataset(path: Path) -> pd.DataFrame:
         raise ValueError(
             "Not enough reviewed data to train. Need at least "
             f"{MIN_EXAMPLES_PER_LABEL} examples per label; current counts: {counts}. "
-            "Synthetic starter rows are only format examples."
+            "Transactions stay in the existing deterministic rules; Uncategorized is the low-confidence fallback. Synthetic starter rows are only format examples."
         )
     return data
 
