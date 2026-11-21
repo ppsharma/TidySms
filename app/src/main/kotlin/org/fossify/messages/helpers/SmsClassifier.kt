@@ -76,7 +76,7 @@ object SmsClassifier {
         (0.65f + (winning - other).coerceAtLeast(0) * 0.08f).coerceAtMost(0.95f)
 
     private val transactionSignals = listOf(
-        "credited" to Regex("\\b(credited|received)\\b", RegexOption.IGNORE_CASE),
+        "credited" to Regex("\\bcredited\\b", RegexOption.IGNORE_CASE),
         "debited" to Regex("\\b(debited|spent|withdrawn)\\b", RegexOption.IGNORE_CASE),
         "banking" to Regex("\\b(bank|a/c|account|acct|upi|imps|neft|rtgs|ifsc|fastag)\\b", RegexOption.IGNORE_CASE),
         "payment" to Regex("\\b(payment|transaction|txn|transfer|paid|refund|settlement|challan|clearing)\\b", RegexOption.IGNORE_CASE),
