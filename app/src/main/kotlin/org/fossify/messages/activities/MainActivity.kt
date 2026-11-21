@@ -163,7 +163,7 @@ class MainActivity : SimpleActivity() {
         if (currentManualCategoryState != lastRenderedManualCategoryState) {
             showFilteredConversations()
         }
-        if (latestConversations.any { it.inboxCategory == null }) {
+        if (!config.inboxInitializationComplete && latestConversations.any { it.inboxCategory == null }) {
             classifyUnclassifiedThreads(latestConversations)
         }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())

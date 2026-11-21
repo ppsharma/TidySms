@@ -20,6 +20,7 @@ class InboxClassificationWorker(
 ) : Worker(appContext, params) {
 
     override fun doWork(): Result {
+        applicationContext.config.inboxInitializationComplete = false
         val database = applicationContext.conversationsDB
         val conversations = database.getNonArchived().filter { !it.isScheduled }
         val total = conversations.size
@@ -81,7 +82,12 @@ class InboxClassificationWorker(
             }
         }
 
-        return if (pending.size > batch.size) Result.retry() else Result.success()
+        return if (pending.size > batch.size) {
+            Result.retry()
+        } else {
+            applicationContext.config.inboxInitializationComplete = true
+            Result.success()
+        }
     }
 
     private fun progressData(processed: Int, total: Int) = Data.Builder()

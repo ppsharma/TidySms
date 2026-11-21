@@ -19,6 +19,7 @@ class Config(context: Context) : BaseConfig(context) {
         private const val RECENT_OTP_DISMISSED = "recent_otp_dismissed"
         private const val INBOX_INITIALIZATION_PROCESSED = "inbox_initialization_processed"
         private const val INBOX_INITIALIZATION_TOTAL = "inbox_initialization_total"
+        private const val INBOX_INITIALIZATION_COMPLETE = "inbox_initialization_complete"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -75,6 +76,10 @@ class Config(context: Context) : BaseConfig(context) {
     var inboxInitializationTotal: Int
         get() = prefs.getInt(INBOX_INITIALIZATION_TOTAL, 0)
         set(value) = prefs.edit().putInt(INBOX_INITIALIZATION_TOTAL, value).apply()
+
+    var inboxInitializationComplete: Boolean
+        get() = prefs.getBoolean(INBOX_INITIALIZATION_COMPLETE, false)
+        set(value) = prefs.edit().putBoolean(INBOX_INITIALIZATION_COMPLETE, value).apply()
 
     val recentOtp: String
         get() = prefs.getString(RECENT_OTP, "") ?: ""
