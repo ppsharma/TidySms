@@ -355,7 +355,11 @@ class MainActivity : SimpleActivity() {
             .getWorkInfosForUniqueWorkLiveData(InboxClassificationWorker.UNIQUE_WORK_NAME)
             .observe(this) { workInfos ->
                 val info = workInfos.firstOrNull()
-                val active = info?.state == WorkInfo.State.RUNNING || info?.state == WorkInfo.State.ENQUEUED
+                if (info == null) {
+                    binding.conversationsProgressBar.hide()
+                    return@observe
+                }
+                val active = info.state == WorkInfo.State.RUNNING || info.state == WorkInfo.State.ENQUEUED
                 if (active) {
                     binding.conversationsProgressBar.show()
                     if (displayedInboxConversations.isEmpty()) {
