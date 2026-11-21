@@ -112,7 +112,9 @@ object SmsClassifier {
         "card" to Regex("\\b(card ending|debit card|credit card|rupay|pos purchase|cheque book|chequebook)\\b", RegexOption.IGNORE_CASE),
         "authentication" to Regex("\\b(otp|one time password|verification code|authenticate)\\b", RegexOption.IGNORE_CASE),
         "due date" to Regex("\\b(due date|bill due|emi due|minimum amount due|due for|statement)\\b", RegexOption.IGNORE_CASE),
-        "government compliance" to Regex("\\b(itr|income tax|gst|cpc|e-?voting|aadhaar|challan)\\b", RegexOption.IGNORE_CASE)
+        "government compliance" to Regex("\\b(itr|income tax|gst|cpc|e-?voting|aadhaar|challan)\\b", RegexOption.IGNORE_CASE),
+        "mutual fund allocation" to Regex("\\b(sip|stp|mutual fund|nav|units? allotted|folio)\\b", RegexOption.IGNORE_CASE),
+        "insurance premium" to Regex("\\b(insurance premium|premium rs\\.?|premium of rs\\.?|policy premium|premium paid)\\b", RegexOption.IGNORE_CASE)
     )
     private val serviceSignals = listOf(
         "delivery" to Regex("\\b(delivery|delivered|out for delivery|shipment|tracking|dispatch)\\b", RegexOption.IGNORE_CASE),
@@ -129,7 +131,9 @@ object SmsClassifier {
         "coupon" to Regex("\\b(coupon|promo code|voucher|cashback up to)\\b", RegexOption.IGNORE_CASE),
         "unsubscribe" to Regex("\\b(stop to unsubscribe|unsubscribe|opt.?out)\\b", RegexOption.IGNORE_CASE),
         "promotional call-to-action" to Regex("\\b(book now|order now|click here|download the app|install the app|showing interest|thank you for your interest|thanks for showing interest)\\b", RegexOption.IGNORE_CASE),
-        "investment solicitation" to Regex("\\b(stock tip|buy shares|target price|multibagger)\\b", RegexOption.IGNORE_CASE)
+        "investment solicitation" to Regex("\\b(stock tip|buy shares|target price|multibagger)\\b", RegexOption.IGNORE_CASE),
+        "earnings solicitation" to Regex("\\b(earn|earning|work online|part.?time work|click for detail|click for details|easy income|daily income)\\b", RegexOption.IGNORE_CASE),
+        "service business advertising" to Regex("\\b(home visit|chemical washing|sofa wash|carpet|curtain|blind|interior|target advtng|team [a-z]+)\\b", RegexOption.IGNORE_CASE)
     )
     private val personalSignals = listOf(
         "greeting" to Regex("\\b(hi|hello|hey|good morning|good evening)\\b", RegexOption.IGNORE_CASE),
