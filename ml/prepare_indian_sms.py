@@ -8,17 +8,17 @@ import argparse, csv, re, urllib.request
 from pathlib import Path
 
 URL = "https://raw.githubusercontent.com/junioralive/india-spam-sms-classification/main/dataset/spam_ham_india.csv"
-PROMO = re.compile(r"\\b(offer|discount|sale|free|win|winner|congratulations|claim|buy now|limited time|cashback|coupon|promo|subscribe|upgrade|apply now|hurry|shop|deal|% off|save rs|save ₹|recharge offer|exclusive offer|flat \\d+|enjoy unlimited|plans starting|valid for \\d+ days)\\b", re.I)
-SCAM = re.compile(r"\\b(kyc|aadhaar|pan card|blocked|suspend|verify now|click here|urgent|otp|pin|password|account will|won a prize|lottery|pay.*fee|refund.*link|update.*kyc|credentials of unknown|high returns)\\b", re.I)
-PERSONAL = re.compile(r"\\b(hi|hello|hey|how are you|thank you|thanks|please|will you|can you|i am|i'm|we are|we'll|tomorrow|today|come|call me|reached|on my way|sorry|happy birthday|good morning|good night|i will|i have|not sure|let me|see you)\\b", re.I)
-EXCLUDE_PERSONAL = re.compile(r"\\b(upi|imps|neft|rtgs|debited|credited|transaction|account balance|ticket booked|appointment confirmed|delivery|shipment)\\b", re.I)
+PROMO = re.compile(r"\b(offer|discount|sale|free|win|winner|congratulations|claim|buy now|limited time|cashback|coupon|promo|subscribe|upgrade|apply now|hurry|shop|deal|% off|save rs|save ₹|recharge offer|exclusive offer|flat \d+|enjoy unlimited|plans starting|valid for \d+ days)\b", re.I)
+SCAM = re.compile(r"\b(kyc|aadhaar|pan card|blocked|suspend|verify now|click here|urgent|otp|pin|password|account will|won a prize|lottery|pay.*fee|refund.*link|update.*kyc|credentials of unknown|high returns)\b", re.I)
+PERSONAL = re.compile(r"\b(hi|hello|hey|how are you|thank you|thanks|please|will you|can you|i am|i'm|we are|we'll|tomorrow|today|come|call me|reached|on my way|sorry|happy birthday|good morning|good night|i will|i have|not sure|let me|see you)\b", re.I)
+EXCLUDE_PERSONAL = re.compile(r"\b(upi|imps|neft|rtgs|debited|credited|transaction|account balance|ticket booked|appointment confirmed|delivery|shipment)\b", re.I)
 def scrub(text: str) -> str:
-    text = re.sub(r"\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b", "[EMAIL]", text, flags=re.I)
-    text = re.sub(r"https?://\\S+|www\\.\\S+|\\b[a-z0-9.-]+\\.(?:in|com|co|net|org|ly|io)/\\S*", "[LINK]", text, flags=re.I)
-    text = re.sub(r"\\b(?:\\+?91[- ]?)?[6-9]\\d{9}\\b", "[PHONE]", text)
-    text = re.sub(r"\\b\\d{10,18}\\b", "[ID]", text)
-    text = re.sub(r"\\b(?:XX|x{2,})\\d{2,6}\\b", "[ACCOUNT]", text, flags=re.I)
-    return re.sub(r"\\s+", " ", text).strip()
+    text = re.sub(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", "[EMAIL]", text, flags=re.I)
+    text = re.sub(r"https?://\S+|www\.\S+|\b[a-z0-9.-]+\.(?:in|com|co|net|org|ly|io)/\S*", "[LINK]", text, flags=re.I)
+    text = re.sub(r"\b(?:\+?91[- ]?)?[6-9]\d{9}\b", "[PHONE]", text)
+    text = re.sub(r"\b\d{10,18}\b", "[ID]", text)
+    text = re.sub(r"\b(?:XX|x{2,})\d{2,6}\b", "[ACCOUNT]", text, flags=re.I)
+    return re.sub(r"\s+", " ", text).strip()
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--input", type=Path)

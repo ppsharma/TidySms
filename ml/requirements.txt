@@ -1,5 +1,0 @@
-# MediaPipe Model Maker currently documents AWE text classification.
-# Python 3.10 is used for compatibility with its TensorFlow dependency stack.
-mediapipe-model-maker==0.2.1.4
-pandas>=2.0,<3
-scikit-learn>=1.3,<2
