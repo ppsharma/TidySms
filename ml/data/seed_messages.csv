@@ -1,31 +1,361 @@
-text,label,source
-"Your order has been shipped. Track your parcel using the link below.",SERVICES,synthetic
-"Thank you for contacting support. Our team will get back to you within two working days.",SERVICES,synthetic
-"Your service request has been registered. Reference number SR12345.",SERVICES,synthetic
-"Your appointment is confirmed for tomorrow at 11 AM.",SERVICES,synthetic
-"Your flight check-in is now open. Visit the airline app to get your boarding pass.",SERVICES,synthetic
-"Your mobile plan expires in three days. Recharge to continue uninterrupted service.",SERVICES,synthetic
-"Your package is out for delivery today.",SERVICES,synthetic
-"Your complaint has been assigned to our support team. We will update you shortly.",SERVICES,synthetic
-"Your return pickup is scheduled for Monday.",SERVICES,synthetic
-"Your electricity meter reading appointment is scheduled for 10 AM.",SERVICES,synthetic
-"Flat 40 percent off on selected styles. Shop the sale today.",PROMOTIONS,synthetic
-"Exclusive offer: use code SAVE20 to get 20 percent off your next order.",PROMOTIONS,synthetic
-"Buy one get one free this weekend. Visit our store now.",PROMOTIONS,synthetic
-"Congratulations! You have won a shopping voucher. Claim it today.",PROMOTIONS,synthetic
-"Limited period deal on premium products. Order now.",PROMOTIONS,synthetic
-"Get cashback up to Rs 500 when you pay using this app.",PROMOTIONS,synthetic
-"Upgrade today and enjoy an additional discount on your subscription.",PROMOTIONS,synthetic
-"New collection launched. Explore the latest arrivals now.",PROMOTIONS,synthetic
-"Refer a friend and earn rewards on every successful referral.",PROMOTIONS,synthetic
-"Special festive offer available only until midnight.",PROMOTIONS,synthetic
-"Hi, are you free to meet for lunch tomorrow?",PERSONAL,synthetic
-"I have reached home. Call me when you are nearby.",PERSONAL,synthetic
-"Good morning, what time should we leave?",PERSONAL,synthetic
-"Can you please bring the documents when you come?",PERSONAL,synthetic
-"Are we still meeting at the usual place this evening?",PERSONAL,synthetic
-"Call me later when you get some time.",PERSONAL,synthetic
-"Happy birthday! Hope you have a wonderful day.",PERSONAL,synthetic
-"I am on my way and should reach in ten minutes.",PERSONAL,synthetic
-"Please let me know when you are free.",PERSONAL,synthetic
-"Thanks for helping yesterday. See you soon.",PERSONAL,synthetic
+text,label,source,template_group
+"Hey, are you still coming over this evening?",PERSONAL,synthetic_curated,per_01
+"Hey, are you still coming over this evening?",PERSONAL,synthetic_curated,per_01
+"Hey, are you still coming over this evening?",PERSONAL,synthetic_curated,per_01
+"Hey, are you still coming over this evening?",PERSONAL,synthetic_curated,per_01
+"I have reached home safely. Let me know when you reach.",PERSONAL,synthetic_curated,per_02
+"I have reached home safely. Let me know when you reach.",PERSONAL,synthetic_curated,per_02
+"I have reached home safely. Let me know when you reach.",PERSONAL,synthetic_curated,per_02
+"I have reached home safely. Let me know when you reach.",PERSONAL,synthetic_curated,per_02
+"Can you call me when you are free?",PERSONAL,synthetic_curated,per_03
+"Can you call me when you are free?",PERSONAL,synthetic_curated,per_03
+"Can you call me when you are free?",PERSONAL,synthetic_curated,per_03
+"Can you call me when you are free?",PERSONAL,synthetic_curated,per_03
+"We are planning dinner on Monday. Will you join?",PERSONAL,synthetic_curated,per_04
+"We are planning dinner on Friday. Will you join?",PERSONAL,synthetic_curated,per_04
+"We are planning dinner on tomorrow. Will you join?",PERSONAL,synthetic_curated,per_04
+"We are planning dinner on Sunday. Will you join?",PERSONAL,synthetic_curated,per_04
+"Please bring the papers when you come tomorrow.",PERSONAL,synthetic_curated,per_05
+"Please bring the papers when you come tomorrow.",PERSONAL,synthetic_curated,per_05
+"Please bring the papers when you come tomorrow.",PERSONAL,synthetic_curated,per_05
+"Please bring the papers when you come tomorrow.",PERSONAL,synthetic_curated,per_05
+"Sorry, I missed your call. I will ring you back.",PERSONAL,synthetic_curated,per_06
+"Sorry, I missed your call. I will ring you back.",PERSONAL,synthetic_curated,per_06
+"Sorry, I missed your call. I will ring you back.",PERSONAL,synthetic_curated,per_06
+"Sorry, I missed your call. I will ring you back.",PERSONAL,synthetic_curated,per_06
+"Good morning! What time should we leave?",PERSONAL,synthetic_curated,per_07
+"Good morning! What time should we leave?",PERSONAL,synthetic_curated,per_07
+"Good morning! What time should we leave?",PERSONAL,synthetic_curated,per_07
+"Good morning! What time should we leave?",PERSONAL,synthetic_curated,per_07
+"I am running late and should be there in 15 minutes.",PERSONAL,synthetic_curated,per_08
+"I am running late and should be there in 20 minutes.",PERSONAL,synthetic_curated,per_08
+"I am running late and should be there in 10 minutes.",PERSONAL,synthetic_curated,per_08
+"I am running late and should be there in 25 minutes.",PERSONAL,synthetic_curated,per_08
+"Are we meeting at the usual place today?",PERSONAL,synthetic_curated,per_09
+"Are we meeting at the usual place today?",PERSONAL,synthetic_curated,per_09
+"Are we meeting at the usual place today?",PERSONAL,synthetic_curated,per_09
+"Are we meeting at the usual place today?",PERSONAL,synthetic_curated,per_09
+"Thanks for helping me yesterday. Really appreciate it.",PERSONAL,synthetic_curated,per_10
+"Thanks for helping me yesterday. Really appreciate it.",PERSONAL,synthetic_curated,per_10
+"Thanks for helping me yesterday. Really appreciate it.",PERSONAL,synthetic_curated,per_10
+"Thanks for helping me yesterday. Really appreciate it.",PERSONAL,synthetic_curated,per_10
+"Please tell Rahul that I will be late.",PERSONAL,synthetic_curated,per_11
+"Please tell Neha that I will be late.",PERSONAL,synthetic_curated,per_11
+"Please tell Amit that I will be late.",PERSONAL,synthetic_curated,per_11
+"Please tell Priya that I will be late.",PERSONAL,synthetic_curated,per_11
+"Can you pick me up from the station around 10 AM?",PERSONAL,synthetic_curated,per_12
+"Can you pick me up from the airport around 11:30 AM?",PERSONAL,synthetic_curated,per_12
+"Can you pick me up from the office around 9 AM?",PERSONAL,synthetic_curated,per_12
+"Can you pick me up from the mall around 3 PM?",PERSONAL,synthetic_curated,per_12
+"I will send you the photos after I get home.",PERSONAL,synthetic_curated,per_13
+"I will send you the photos after I get home.",PERSONAL,synthetic_curated,per_13
+"I will send you the photos after I get home.",PERSONAL,synthetic_curated,per_13
+"I will send you the photos after I get home.",PERSONAL,synthetic_curated,per_13
+"Happy birthday! Have a wonderful year ahead.",PERSONAL,synthetic_curated,per_14
+"Happy birthday! Have a wonderful year ahead.",PERSONAL,synthetic_curated,per_14
+"Happy birthday! Have a wonderful year ahead.",PERSONAL,synthetic_curated,per_14
+"Happy birthday! Have a wonderful year ahead.",PERSONAL,synthetic_curated,per_14
+"Did you get a chance to speak with him?",PERSONAL,synthetic_curated,per_15
+"Did you get a chance to speak with him?",PERSONAL,synthetic_curated,per_15
+"Did you get a chance to speak with him?",PERSONAL,synthetic_curated,per_15
+"Did you get a chance to speak with him?",PERSONAL,synthetic_curated,per_15
+"I am at the office now. Where are you?",PERSONAL,synthetic_curated,per_16
+"I am at the office now. Where are you?",PERSONAL,synthetic_curated,per_16
+"I am at the office now. Where are you?",PERSONAL,synthetic_curated,per_16
+"I am at the office now. Where are you?",PERSONAL,synthetic_curated,per_16
+"Let's catch up over tea this weekend.",PERSONAL,synthetic_curated,per_17
+"Let's catch up over tea this weekend.",PERSONAL,synthetic_curated,per_17
+"Let's catch up over tea this weekend.",PERSONAL,synthetic_curated,per_17
+"Let's catch up over tea this weekend.",PERSONAL,synthetic_curated,per_17
+"Please remind me to bring your book.",PERSONAL,synthetic_curated,per_18
+"Please remind me to bring your book.",PERSONAL,synthetic_curated,per_18
+"Please remind me to bring your book.",PERSONAL,synthetic_curated,per_18
+"Please remind me to bring your book.",PERSONAL,synthetic_curated,per_18
+"I cannot talk right now. I will call later.",PERSONAL,synthetic_curated,per_19
+"I cannot talk right now. I will call later.",PERSONAL,synthetic_curated,per_19
+"I cannot talk right now. I will call later.",PERSONAL,synthetic_curated,per_19
+"I cannot talk right now. I will call later.",PERSONAL,synthetic_curated,per_19
+"Are you available for a quick meeting after lunch?",PERSONAL,synthetic_curated,per_20
+"Are you available for a quick meeting after lunch?",PERSONAL,synthetic_curated,per_20
+"Are you available for a quick meeting after lunch?",PERSONAL,synthetic_curated,per_20
+"Are you available for a quick meeting after lunch?",PERSONAL,synthetic_curated,per_20
+"The children are asking when you will come.",PERSONAL,synthetic_curated,per_21
+"The children are asking when you will come.",PERSONAL,synthetic_curated,per_21
+"The children are asking when you will come.",PERSONAL,synthetic_curated,per_21
+"The children are asking when you will come.",PERSONAL,synthetic_curated,per_21
+"I have left the keys with Rahul.",PERSONAL,synthetic_curated,per_22
+"I have left the keys with Neha.",PERSONAL,synthetic_curated,per_22
+"I have left the keys with Amit.",PERSONAL,synthetic_curated,per_22
+"I have left the keys with Priya.",PERSONAL,synthetic_curated,per_22
+"Will you be able to come on Monday?",PERSONAL,synthetic_curated,per_23
+"Will you be able to come on Friday?",PERSONAL,synthetic_curated,per_23
+"Will you be able to come on tomorrow?",PERSONAL,synthetic_curated,per_23
+"Will you be able to come on Sunday?",PERSONAL,synthetic_curated,per_23
+"That sounds good. Let's do it.",PERSONAL,synthetic_curated,per_24
+"That sounds good. Let's do it.",PERSONAL,synthetic_curated,per_24
+"That sounds good. Let's do it.",PERSONAL,synthetic_curated,per_24
+"That sounds good. Let's do it.",PERSONAL,synthetic_curated,per_24
+"I am on my way. Traffic is a little slow.",PERSONAL,synthetic_curated,per_25
+"I am on my way. Traffic is a little slow.",PERSONAL,synthetic_curated,per_25
+"I am on my way. Traffic is a little slow.",PERSONAL,synthetic_curated,per_25
+"I am on my way. Traffic is a little slow.",PERSONAL,synthetic_curated,per_25
+"Please share the address again.",PERSONAL,synthetic_curated,per_26
+"Please share the address again.",PERSONAL,synthetic_curated,per_26
+"Please share the address again.",PERSONAL,synthetic_curated,per_26
+"Please share the address again.",PERSONAL,synthetic_curated,per_26
+"Have you reached the station?",PERSONAL,synthetic_curated,per_27
+"Have you reached the station?",PERSONAL,synthetic_curated,per_27
+"Have you reached the station?",PERSONAL,synthetic_curated,per_27
+"Have you reached the station?",PERSONAL,synthetic_curated,per_27
+"We should leave early tomorrow morning.",PERSONAL,synthetic_curated,per_28
+"We should leave early tomorrow morning.",PERSONAL,synthetic_curated,per_28
+"We should leave early tomorrow morning.",PERSONAL,synthetic_curated,per_28
+"We should leave early tomorrow morning.",PERSONAL,synthetic_curated,per_28
+"Thank you for the invitation. We will try to make it.",PERSONAL,synthetic_curated,per_29
+"Thank you for the invitation. We will try to make it.",PERSONAL,synthetic_curated,per_29
+"Thank you for the invitation. We will try to make it.",PERSONAL,synthetic_curated,per_29
+"Thank you for the invitation. We will try to make it.",PERSONAL,synthetic_curated,per_29
+"I will check and get back to you this evening.",PERSONAL,synthetic_curated,per_30
+"I will check and get back to you this evening.",PERSONAL,synthetic_curated,per_30
+"I will check and get back to you this evening.",PERSONAL,synthetic_curated,per_30
+"I will check and get back to you this evening.",PERSONAL,synthetic_curated,per_30
+"Your parcel has been picked up by the courier partner. Tracking ID TS4821.",SERVICES,synthetic_curated,svc_01
+"Your parcel has been picked up by the courier partner. Tracking ID TS7392.",SERVICES,synthetic_curated,svc_01
+"Your parcel has been picked up by the courier partner. Tracking ID TS1658.",SERVICES,synthetic_curated,svc_01
+"Your parcel has been picked up by the courier partner. Tracking ID TS9046.",SERVICES,synthetic_curated,svc_01
+"Your shipment is out for delivery today. Please keep your phone available.",SERVICES,synthetic_curated,svc_02
+"Your shipment is out for delivery today. Please keep your phone available.",SERVICES,synthetic_curated,svc_02
+"Your shipment is out for delivery today. Please keep your phone available.",SERVICES,synthetic_curated,svc_02
+"Your shipment is out for delivery today. Please keep your phone available.",SERVICES,synthetic_curated,svc_02
+"Delivery attempt was unsuccessful. Our courier partner will try again tomorrow.",SERVICES,synthetic_curated,svc_03
+"Delivery attempt was unsuccessful. Our courier partner will try again tomorrow.",SERVICES,synthetic_curated,svc_03
+"Delivery attempt was unsuccessful. Our courier partner will try again tomorrow.",SERVICES,synthetic_curated,svc_03
+"Delivery attempt was unsuccessful. Our courier partner will try again tomorrow.",SERVICES,synthetic_curated,svc_03
+"Your order has been packed and handed over to the delivery partner.",SERVICES,synthetic_curated,svc_04
+"Your order has been packed and handed over to the delivery partner.",SERVICES,synthetic_curated,svc_04
+"Your order has been packed and handed over to the delivery partner.",SERVICES,synthetic_curated,svc_04
+"Your order has been packed and handed over to the delivery partner.",SERVICES,synthetic_curated,svc_04
+"Your return pickup is scheduled for Monday, between 10 AM and 2 PM.",SERVICES,synthetic_curated,svc_05
+"Your return pickup is scheduled for Friday, between 11:30 AM and 4 PM.",SERVICES,synthetic_curated,svc_05
+"Your return pickup is scheduled for tomorrow, between 9 AM and 1 PM.",SERVICES,synthetic_curated,svc_05
+"Your return pickup is scheduled for Sunday, between 3 PM and 6 PM.",SERVICES,synthetic_curated,svc_05
+"Your replacement item has been dispatched. Track it using reference TS4821.",SERVICES,synthetic_curated,svc_06
+"Your replacement item has been dispatched. Track it using reference TS7392.",SERVICES,synthetic_curated,svc_06
+"Your replacement item has been dispatched. Track it using reference TS1658.",SERVICES,synthetic_curated,svc_06
+"Your replacement item has been dispatched. Track it using reference TS9046.",SERVICES,synthetic_curated,svc_06
+"Your appointment is confirmed for Monday at 10 AM.",SERVICES,synthetic_curated,svc_07
+"Your appointment is confirmed for Friday at 11:30 AM.",SERVICES,synthetic_curated,svc_07
+"Your appointment is confirmed for tomorrow at 9 AM.",SERVICES,synthetic_curated,svc_07
+"Your appointment is confirmed for Sunday at 3 PM.",SERVICES,synthetic_curated,svc_07
+"Your service request TS4821 has been registered successfully.",SERVICES,synthetic_curated,svc_08
+"Your service request TS7392 has been registered successfully.",SERVICES,synthetic_curated,svc_08
+"Your service request TS1658 has been registered successfully.",SERVICES,synthetic_curated,svc_08
+"Your service request TS9046 has been registered successfully.",SERVICES,synthetic_curated,svc_08
+"Our technician is scheduled to visit your address on Monday.",SERVICES,synthetic_curated,svc_09
+"Our technician is scheduled to visit your address on Friday.",SERVICES,synthetic_curated,svc_09
+"Our technician is scheduled to visit your address on tomorrow.",SERVICES,synthetic_curated,svc_09
+"Our technician is scheduled to visit your address on Sunday.",SERVICES,synthetic_curated,svc_09
+"Your complaint has been assigned to the support team. Ticket TS4821.",SERVICES,synthetic_curated,svc_10
+"Your complaint has been assigned to the support team. Ticket TS7392.",SERVICES,synthetic_curated,svc_10
+"Your complaint has been assigned to the support team. Ticket TS1658.",SERVICES,synthetic_curated,svc_10
+"Your complaint has been assigned to the support team. Ticket TS9046.",SERVICES,synthetic_curated,svc_10
+"We have received your application. You can check its status using reference TS4821.",SERVICES,synthetic_curated,svc_11
+"We have received your application. You can check its status using reference TS7392.",SERVICES,synthetic_curated,svc_11
+"We have received your application. You can check its status using reference TS1658.",SERVICES,synthetic_curated,svc_11
+"We have received your application. You can check its status using reference TS9046.",SERVICES,synthetic_curated,svc_11
+"Your broadband installation visit is confirmed for Monday.",SERVICES,synthetic_curated,svc_12
+"Your broadband installation visit is confirmed for Friday.",SERVICES,synthetic_curated,svc_12
+"Your broadband installation visit is confirmed for tomorrow.",SERVICES,synthetic_curated,svc_12
+"Your broadband installation visit is confirmed for Sunday.",SERVICES,synthetic_curated,svc_12
+"Your mobile plan will expire on Monday. Recharge to continue uninterrupted service.",SERVICES,synthetic_curated,svc_13
+"Your mobile plan will expire on Friday. Recharge to continue uninterrupted service.",SERVICES,synthetic_curated,svc_13
+"Your mobile plan will expire on tomorrow. Recharge to continue uninterrupted service.",SERVICES,synthetic_curated,svc_13
+"Your mobile plan will expire on Sunday. Recharge to continue uninterrupted service.",SERVICES,synthetic_curated,svc_13
+"Your data pack has been activated and is valid until Monday.",SERVICES,synthetic_curated,svc_14
+"Your data pack has been activated and is valid until Friday.",SERVICES,synthetic_curated,svc_14
+"Your data pack has been activated and is valid until tomorrow.",SERVICES,synthetic_curated,svc_14
+"Your data pack has been activated and is valid until Sunday.",SERVICES,synthetic_curated,svc_14
+"Your number portability request is being processed.",SERVICES,synthetic_curated,svc_15
+"Your number portability request is being processed.",SERVICES,synthetic_curated,svc_15
+"Your number portability request is being processed.",SERVICES,synthetic_curated,svc_15
+"Your number portability request is being processed.",SERVICES,synthetic_curated,svc_15
+"Your train ticket is confirmed. PNR TS4821. Have a safe journey.",SERVICES,synthetic_curated,svc_16
+"Your train ticket is confirmed. PNR TS7392. Have a safe journey.",SERVICES,synthetic_curated,svc_16
+"Your train ticket is confirmed. PNR TS1658. Have a safe journey.",SERVICES,synthetic_curated,svc_16
+"Your train ticket is confirmed. PNR TS9046. Have a safe journey.",SERVICES,synthetic_curated,svc_16
+"Online check-in is now open for your flight departing on Monday.",SERVICES,synthetic_curated,svc_17
+"Online check-in is now open for your flight departing on Friday.",SERVICES,synthetic_curated,svc_17
+"Online check-in is now open for your flight departing on tomorrow.",SERVICES,synthetic_curated,svc_17
+"Online check-in is now open for your flight departing on Sunday.",SERVICES,synthetic_curated,svc_17
+"Your bus booking is confirmed. Boarding point: the station.",SERVICES,synthetic_curated,svc_18
+"Your bus booking is confirmed. Boarding point: the airport.",SERVICES,synthetic_curated,svc_18
+"Your bus booking is confirmed. Boarding point: the office.",SERVICES,synthetic_curated,svc_18
+"Your bus booking is confirmed. Boarding point: the mall.",SERVICES,synthetic_curated,svc_18
+"Your hotel reservation is confirmed for Monday. Booking ID TS4821.",SERVICES,synthetic_curated,svc_19
+"Your hotel reservation is confirmed for Friday. Booking ID TS7392.",SERVICES,synthetic_curated,svc_19
+"Your hotel reservation is confirmed for tomorrow. Booking ID TS1658.",SERVICES,synthetic_curated,svc_19
+"Your hotel reservation is confirmed for Sunday. Booking ID TS9046.",SERVICES,synthetic_curated,svc_19
+"Your order is ready for collection at the selected store.",SERVICES,synthetic_curated,svc_20
+"Your order is ready for collection at the selected store.",SERVICES,synthetic_curated,svc_20
+"Your order is ready for collection at the selected store.",SERVICES,synthetic_curated,svc_20
+"Your order is ready for collection at the selected store.",SERVICES,synthetic_curated,svc_20
+"The technician has completed the installation at your premises.",SERVICES,synthetic_curated,svc_21
+"The technician has completed the installation at your premises.",SERVICES,synthetic_curated,svc_21
+"The technician has completed the installation at your premises.",SERVICES,synthetic_curated,svc_21
+"The technician has completed the installation at your premises.",SERVICES,synthetic_curated,svc_21
+"Your service visit has been rescheduled to Monday at 10 AM.",SERVICES,synthetic_curated,svc_22
+"Your service visit has been rescheduled to Friday at 11:30 AM.",SERVICES,synthetic_curated,svc_22
+"Your service visit has been rescheduled to tomorrow at 9 AM.",SERVICES,synthetic_curated,svc_22
+"Your service visit has been rescheduled to Sunday at 3 PM.",SERVICES,synthetic_curated,svc_22
+"Your request for a new connection is under review.",SERVICES,synthetic_curated,svc_23
+"Your request for a new connection is under review.",SERVICES,synthetic_curated,svc_23
+"Your request for a new connection is under review.",SERVICES,synthetic_curated,svc_23
+"Your request for a new connection is under review.",SERVICES,synthetic_curated,svc_23
+"Your electricity meter reading visit is scheduled for Monday.",SERVICES,synthetic_curated,svc_24
+"Your electricity meter reading visit is scheduled for Friday.",SERVICES,synthetic_curated,svc_24
+"Your electricity meter reading visit is scheduled for tomorrow.",SERVICES,synthetic_curated,svc_24
+"Your electricity meter reading visit is scheduled for Sunday.",SERVICES,synthetic_curated,svc_24
+"Your subscription has been renewed and the next renewal is on Monday.",SERVICES,synthetic_curated,svc_25
+"Your subscription has been renewed and the next renewal is on Friday.",SERVICES,synthetic_curated,svc_25
+"Your subscription has been renewed and the next renewal is on tomorrow.",SERVICES,synthetic_curated,svc_25
+"Your subscription has been renewed and the next renewal is on Sunday.",SERVICES,synthetic_curated,svc_25
+"Your FASTag has been dispatched. Delivery reference TS4821.",SERVICES,synthetic_curated,svc_26
+"Your FASTag has been dispatched. Delivery reference TS7392.",SERVICES,synthetic_curated,svc_26
+"Your FASTag has been dispatched. Delivery reference TS1658.",SERVICES,synthetic_curated,svc_26
+"Your FASTag has been dispatched. Delivery reference TS9046.",SERVICES,synthetic_curated,svc_26
+"Your vehicle service booking is confirmed for Monday at 10 AM.",SERVICES,synthetic_curated,svc_27
+"Your vehicle service booking is confirmed for Friday at 11:30 AM.",SERVICES,synthetic_curated,svc_27
+"Your vehicle service booking is confirmed for tomorrow at 9 AM.",SERVICES,synthetic_curated,svc_27
+"Your vehicle service booking is confirmed for Sunday at 3 PM.",SERVICES,synthetic_curated,svc_27
+"We have received your feedback. Reference number TS4821.",SERVICES,synthetic_curated,svc_28
+"We have received your feedback. Reference number TS7392.",SERVICES,synthetic_curated,svc_28
+"We have received your feedback. Reference number TS1658.",SERVICES,synthetic_curated,svc_28
+"We have received your feedback. Reference number TS9046.",SERVICES,synthetic_curated,svc_28
+"Your document verification appointment is booked for Monday.",SERVICES,synthetic_curated,svc_29
+"Your document verification appointment is booked for Friday.",SERVICES,synthetic_curated,svc_29
+"Your document verification appointment is booked for tomorrow.",SERVICES,synthetic_curated,svc_29
+"Your document verification appointment is booked for Sunday.",SERVICES,synthetic_curated,svc_29
+"The package has reached the local delivery hub and is being processed.",SERVICES,synthetic_curated,svc_30
+"The package has reached the local delivery hub and is being processed.",SERVICES,synthetic_curated,svc_30
+"The package has reached the local delivery hub and is being processed.",SERVICES,synthetic_curated,svc_30
+"The package has reached the local delivery hub and is being processed.",SERVICES,synthetic_curated,svc_30
+"Get up to 25% off on selected styles. Shop the collection today.",PROMOTIONS,synthetic_curated,pro_01
+"Get up to 40% off on selected styles. Shop the collection today.",PROMOTIONS,synthetic_curated,pro_01
+"Get up to 30% off on selected styles. Shop the collection today.",PROMOTIONS,synthetic_curated,pro_01
+"Get up to 50% off on selected styles. Shop the collection today.",PROMOTIONS,synthetic_curated,pro_01
+"Exclusive festive offer! Use code SAVE25 at checkout before Monday.",PROMOTIONS,synthetic_curated,pro_02
+"Exclusive festive offer! Use code FESTIVE40 at checkout before Friday.",PROMOTIONS,synthetic_curated,pro_02
+"Exclusive festive offer! Use code WELCOME30 at checkout before tomorrow.",PROMOTIONS,synthetic_curated,pro_02
+"Exclusive festive offer! Use code DEAL50 at checkout before Sunday.",PROMOTIONS,synthetic_curated,pro_02
+"New arrivals are here. Explore the latest collection now.",PROMOTIONS,synthetic_curated,pro_03
+"New arrivals are here. Explore the latest collection now.",PROMOTIONS,synthetic_curated,pro_03
+"New arrivals are here. Explore the latest collection now.",PROMOTIONS,synthetic_curated,pro_03
+"New arrivals are here. Explore the latest collection now.",PROMOTIONS,synthetic_curated,pro_03
+"Buy one and get one free on selected products this weekend.",PROMOTIONS,synthetic_curated,pro_04
+"Buy one and get one free on selected products this weekend.",PROMOTIONS,synthetic_curated,pro_04
+"Buy one and get one free on selected products this weekend.",PROMOTIONS,synthetic_curated,pro_04
+"Buy one and get one free on selected products this weekend.",PROMOTIONS,synthetic_curated,pro_04
+"Enjoy a flat Rs 500 discount on your next purchase. Terms apply.",PROMOTIONS,synthetic_curated,pro_05
+"Enjoy a flat Rs 750 discount on your next purchase. Terms apply.",PROMOTIONS,synthetic_curated,pro_05
+"Enjoy a flat Rs 300 discount on your next purchase. Terms apply.",PROMOTIONS,synthetic_curated,pro_05
+"Enjoy a flat Rs 1000 discount on your next purchase. Terms apply.",PROMOTIONS,synthetic_curated,pro_05
+"Limited-period deal: save 25% when you shop online today.",PROMOTIONS,synthetic_curated,pro_06
+"Limited-period deal: save 40% when you shop online today.",PROMOTIONS,synthetic_curated,pro_06
+"Limited-period deal: save 30% when you shop online today.",PROMOTIONS,synthetic_curated,pro_06
+"Limited-period deal: save 50% when you shop online today.",PROMOTIONS,synthetic_curated,pro_06
+"Upgrade your plan now and enjoy additional benefits at no extra cost.",PROMOTIONS,synthetic_curated,pro_07
+"Upgrade your plan now and enjoy additional benefits at no extra cost.",PROMOTIONS,synthetic_curated,pro_07
+"Upgrade your plan now and enjoy additional benefits at no extra cost.",PROMOTIONS,synthetic_curated,pro_07
+"Upgrade your plan now and enjoy additional benefits at no extra cost.",PROMOTIONS,synthetic_curated,pro_07
+"Refer a friend and earn rewards on every successful referral.",PROMOTIONS,synthetic_curated,pro_08
+"Refer a friend and earn rewards on every successful referral.",PROMOTIONS,synthetic_curated,pro_08
+"Refer a friend and earn rewards on every successful referral.",PROMOTIONS,synthetic_curated,pro_08
+"Refer a friend and earn rewards on every successful referral.",PROMOTIONS,synthetic_curated,pro_08
+"Your special shopping coupon SAVE25 is waiting. Redeem it today.",PROMOTIONS,synthetic_curated,pro_09
+"Your special shopping coupon FESTIVE40 is waiting. Redeem it today.",PROMOTIONS,synthetic_curated,pro_09
+"Your special shopping coupon WELCOME30 is waiting. Redeem it today.",PROMOTIONS,synthetic_curated,pro_09
+"Your special shopping coupon DEAL50 is waiting. Redeem it today.",PROMOTIONS,synthetic_curated,pro_09
+"Celebrate the season with exciting offers across our stores.",PROMOTIONS,synthetic_curated,pro_10
+"Celebrate the season with exciting offers across our stores.",PROMOTIONS,synthetic_curated,pro_10
+"Celebrate the season with exciting offers across our stores.",PROMOTIONS,synthetic_curated,pro_10
+"Celebrate the season with exciting offers across our stores.",PROMOTIONS,synthetic_curated,pro_10
+"Flash sale starts today. Visit the app to see the deals.",PROMOTIONS,synthetic_curated,pro_11
+"Flash sale starts today. Visit the app to see the deals.",PROMOTIONS,synthetic_curated,pro_11
+"Flash sale starts today. Visit the app to see the deals.",PROMOTIONS,synthetic_curated,pro_11
+"Flash sale starts today. Visit the app to see the deals.",PROMOTIONS,synthetic_curated,pro_11
+"Get cashback up to Rs 500 on eligible purchases.",PROMOTIONS,synthetic_curated,pro_12
+"Get cashback up to Rs 750 on eligible purchases.",PROMOTIONS,synthetic_curated,pro_12
+"Get cashback up to Rs 300 on eligible purchases.",PROMOTIONS,synthetic_curated,pro_12
+"Get cashback up to Rs 1000 on eligible purchases.",PROMOTIONS,synthetic_curated,pro_12
+"Discover our new range and enjoy introductory prices.",PROMOTIONS,synthetic_curated,pro_13
+"Discover our new range and enjoy introductory prices.",PROMOTIONS,synthetic_curated,pro_13
+"Discover our new range and enjoy introductory prices.",PROMOTIONS,synthetic_curated,pro_13
+"Discover our new range and enjoy introductory prices.",PROMOTIONS,synthetic_curated,pro_13
+"Book now to get an exclusive early-bird discount.",PROMOTIONS,synthetic_curated,pro_14
+"Book now to get an exclusive early-bird discount.",PROMOTIONS,synthetic_curated,pro_14
+"Book now to get an exclusive early-bird discount.",PROMOTIONS,synthetic_curated,pro_14
+"Book now to get an exclusive early-bird discount.",PROMOTIONS,synthetic_curated,pro_14
+"Last chance to shop the sale. Offers end on Monday.",PROMOTIONS,synthetic_curated,pro_15
+"Last chance to shop the sale. Offers end on Friday.",PROMOTIONS,synthetic_curated,pro_15
+"Last chance to shop the sale. Offers end on tomorrow.",PROMOTIONS,synthetic_curated,pro_15
+"Last chance to shop the sale. Offers end on Sunday.",PROMOTIONS,synthetic_curated,pro_15
+"Enjoy complimentary installation when you purchase this week.",PROMOTIONS,synthetic_curated,pro_16
+"Enjoy complimentary installation when you purchase this week.",PROMOTIONS,synthetic_curated,pro_16
+"Enjoy complimentary installation when you purchase this week.",PROMOTIONS,synthetic_curated,pro_16
+"Enjoy complimentary installation when you purchase this week.",PROMOTIONS,synthetic_curated,pro_16
+"Switch to our premium plan and get 3 months at a special price.",PROMOTIONS,synthetic_curated,pro_17
+"Switch to our premium plan and get 6 months at a special price.",PROMOTIONS,synthetic_curated,pro_17
+"Switch to our premium plan and get 2 months at a special price.",PROMOTIONS,synthetic_curated,pro_17
+"Switch to our premium plan and get 12 months at a special price.",PROMOTIONS,synthetic_curated,pro_17
+"Shop for Rs 500 or more and receive a free gift.",PROMOTIONS,synthetic_curated,pro_18
+"Shop for Rs 750 or more and receive a free gift.",PROMOTIONS,synthetic_curated,pro_18
+"Shop for Rs 300 or more and receive a free gift.",PROMOTIONS,synthetic_curated,pro_18
+"Shop for Rs 1000 or more and receive a free gift.",PROMOTIONS,synthetic_curated,pro_18
+"Special offer for members: extra 25% off your next order.",PROMOTIONS,synthetic_curated,pro_19
+"Special offer for members: extra 40% off your next order.",PROMOTIONS,synthetic_curated,pro_19
+"Special offer for members: extra 30% off your next order.",PROMOTIONS,synthetic_curated,pro_19
+"Special offer for members: extra 50% off your next order.",PROMOTIONS,synthetic_curated,pro_19
+"Don't miss the weekend sale with deals on top brands.",PROMOTIONS,synthetic_curated,pro_20
+"Don't miss the weekend sale with deals on top brands.",PROMOTIONS,synthetic_curated,pro_20
+"Don't miss the weekend sale with deals on top brands.",PROMOTIONS,synthetic_curated,pro_20
+"Don't miss the weekend sale with deals on top brands.",PROMOTIONS,synthetic_curated,pro_20
+"Apply today for our new card and enjoy welcome benefits.",PROMOTIONS,synthetic_curated,pro_21
+"Apply today for our new card and enjoy welcome benefits.",PROMOTIONS,synthetic_curated,pro_21
+"Apply today for our new card and enjoy welcome benefits.",PROMOTIONS,synthetic_curated,pro_21
+"Apply today for our new card and enjoy welcome benefits.",PROMOTIONS,synthetic_curated,pro_21
+"Get a bonus voucher when you purchase selected products.",PROMOTIONS,synthetic_curated,pro_22
+"Get a bonus voucher when you purchase selected products.",PROMOTIONS,synthetic_curated,pro_22
+"Get a bonus voucher when you purchase selected products.",PROMOTIONS,synthetic_curated,pro_22
+"Get a bonus voucher when you purchase selected products.",PROMOTIONS,synthetic_curated,pro_22
+"Explore limited-time prices on our latest electronics range.",PROMOTIONS,synthetic_curated,pro_23
+"Explore limited-time prices on our latest electronics range.",PROMOTIONS,synthetic_curated,pro_23
+"Explore limited-time prices on our latest electronics range.",PROMOTIONS,synthetic_curated,pro_23
+"Explore limited-time prices on our latest electronics range.",PROMOTIONS,synthetic_curated,pro_23
+"Your loyalty reward is ready. Redeem it on your next visit.",PROMOTIONS,synthetic_curated,pro_24
+"Your loyalty reward is ready. Redeem it on your next visit.",PROMOTIONS,synthetic_curated,pro_24
+"Your loyalty reward is ready. Redeem it on your next visit.",PROMOTIONS,synthetic_curated,pro_24
+"Your loyalty reward is ready. Redeem it on your next visit.",PROMOTIONS,synthetic_curated,pro_24
+"Save more on your favourite products with code SAVE25.",PROMOTIONS,synthetic_curated,pro_25
+"Save more on your favourite products with code FESTIVE40.",PROMOTIONS,synthetic_curated,pro_25
+"Save more on your favourite products with code WELCOME30.",PROMOTIONS,synthetic_curated,pro_25
+"Save more on your favourite products with code DEAL50.",PROMOTIONS,synthetic_curated,pro_25
+"Invite friends to join and unlock exclusive rewards.",PROMOTIONS,synthetic_curated,pro_26
+"Invite friends to join and unlock exclusive rewards.",PROMOTIONS,synthetic_curated,pro_26
+"Invite friends to join and unlock exclusive rewards.",PROMOTIONS,synthetic_curated,pro_26
+"Invite friends to join and unlock exclusive rewards.",PROMOTIONS,synthetic_curated,pro_26
+"Enjoy special pricing on annual subscriptions this week.",PROMOTIONS,synthetic_curated,pro_27
+"Enjoy special pricing on annual subscriptions this week.",PROMOTIONS,synthetic_curated,pro_27
+"Enjoy special pricing on annual subscriptions this week.",PROMOTIONS,synthetic_curated,pro_27
+"Enjoy special pricing on annual subscriptions this week.",PROMOTIONS,synthetic_curated,pro_27
+"Visit our store this weekend for exciting launch offers.",PROMOTIONS,synthetic_curated,pro_28
+"Visit our store this weekend for exciting launch offers.",PROMOTIONS,synthetic_curated,pro_28
+"Visit our store this weekend for exciting launch offers.",PROMOTIONS,synthetic_curated,pro_28
+"Visit our store this weekend for exciting launch offers.",PROMOTIONS,synthetic_curated,pro_28
+"Order today and get free delivery on eligible items.",PROMOTIONS,synthetic_curated,pro_29
+"Order today and get free delivery on eligible items.",PROMOTIONS,synthetic_curated,pro_29
+"Order today and get free delivery on eligible items.",PROMOTIONS,synthetic_curated,pro_29
+"Order today and get free delivery on eligible items.",PROMOTIONS,synthetic_curated,pro_29
+"Shop the clearance event before the selected styles sell out.",PROMOTIONS,synthetic_curated,pro_30
+"Shop the clearance event before the selected styles sell out.",PROMOTIONS,synthetic_curated,pro_30
+"Shop the clearance event before the selected styles sell out.",PROMOTIONS,synthetic_curated,pro_30
+"Shop the clearance event before the selected styles sell out.",PROMOTIONS,synthetic_curated,pro_30

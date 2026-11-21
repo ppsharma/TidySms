@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 
 LABELS = ["PERSONAL", "SERVICES", "PROMOTIONS"]
 MIN_EXAMPLES_PER_LABEL = 100
@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
 
 def load_dataset(path: Path) -> pd.DataFrame:
     data = pd.read_csv(path).fillna("")
-    required = {"text", "label", "source"}
+    required = {"text", "label", "source", "template_group"}
     missing = required.difference(data.columns)
     if missing:
         raise ValueError(f"Missing CSV columns: {sorted(missing)}")
@@ -52,9 +52,11 @@ def load_dataset(path: Path) -> pd.DataFrame:
 def main() -> None:
     args = parse_args()
     data = load_dataset(args.input)
-    train, validation = train_test_split(
-        data, test_size=0.2, random_state=args.seed, stratify=data["label"]
-    )
+    splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=args.seed)
+    train_idx, validation_idx = next(splitter.split(data, groups=data["template_group"]))
+    train, validation = data.iloc[train_idx], data.iloc[validation_idx]
+    if set(train["label"]) != set(LABELS) or set(validation["label"]) != set(LABELS):
+        raise ValueError("Grouped split must contain every label in both train and validation; add more independent template groups.")
     args.output.mkdir(parents=True, exist_ok=True)
     train_path = args.output / "train.csv"
     validation_path = args.output / "validation.csv"

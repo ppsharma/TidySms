@@ -1,0 +1,16 @@
+text,label,source,template_group
+"I am outside. Come down when you are ready.",PERSONAL,human_authored_challenge,hold_1
+"Can we talk after the meeting?",PERSONAL,human_authored_challenge,hold_2
+"I left your charger on the table.",PERSONAL,human_authored_challenge,hold_3
+"We will reach by evening.",PERSONAL,human_authored_challenge,hold_4
+"Please message me once you arrive.",PERSONAL,human_authored_challenge,hold_5
+"The courier has collected your return package.",SERVICES,human_authored_challenge,hold_6
+"Your gas connection inspection is booked for Thursday.",SERVICES,human_authored_challenge,hold_7
+"Your support ticket has been closed. Reply if the issue remains.",SERVICES,human_authored_challenge,hold_8
+"Your cab is arriving in five minutes. Driver details are in the app.",SERVICES,human_authored_challenge,hold_9
+"Your library book is due for return on 18 December.",SERVICES,human_authored_challenge,hold_10
+"Today only: extra savings on selected merchandise.",PROMOTIONS,human_authored_challenge,hold_11
+"Use your member code for an additional discount.",PROMOTIONS,human_authored_challenge,hold_12
+"New season, new deals. Browse the collection.",PROMOTIONS,human_authored_challenge,hold_13
+"Subscribe this week and receive a bonus month.",PROMOTIONS,human_authored_challenge,hold_14
+"The year-end sale is now live. Shop online.",PROMOTIONS,human_authored_challenge,hold_15
