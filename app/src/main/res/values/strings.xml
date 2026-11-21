@@ -5,6 +5,11 @@
     <string name="category_manual">Manual</string>
     <string name="sender_category_value">%1$s · %2$s</string>
     <string name="messages_title">Messages</string>
+    <string name="recent_otp">Recent OTP</string>
+    <string name="copy_otp">Copy OTP</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="delete_otp">Delete</string>
+    <string name="delete_otp_confirmation">Delete this OTP message?</string>
     <string name="category_transactions">Transactions</string>
     <string name="category_services">Services</string>
     <string name="category_promotions">Promotions</string>
