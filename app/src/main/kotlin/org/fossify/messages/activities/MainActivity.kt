@@ -180,6 +180,7 @@ class MainActivity : SimpleActivity() {
         binding.mainMenu.requireToolbar().inflateMenu(R.menu.menu_main)
         binding.mainMenu.toggleHideOnScroll(true)
         binding.mainMenu.setupMenu()
+        binding.mainMenu.requireToolbar().title = getString(R.string.messages_title)
 
         binding.mainMenu.onSearchClosedListener = {
             fadeOutSearch()
