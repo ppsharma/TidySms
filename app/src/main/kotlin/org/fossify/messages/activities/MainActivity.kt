@@ -374,7 +374,9 @@ class MainActivity : SimpleActivity() {
                     }
                 } else {
                     binding.conversationsProgressBar.hide()
-                    if (displayedInboxConversations.isEmpty() && latestConversations.isNotEmpty()) {
+                    if (info.state == WorkInfo.State.SUCCEEDED) {
+                        showFilteredConversations()
+                    } else if (displayedInboxConversations.isEmpty() && latestConversations.isNotEmpty()) {
                         showOrHidePlaceholder(true)
                     }
                 }
