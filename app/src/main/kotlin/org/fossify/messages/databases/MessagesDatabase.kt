@@ -173,7 +173,7 @@ abstract class MessagesDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE conversations ADD COLUMN classification_manual INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE conversations ADD COLUMN classifier_version INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE conversations ADD COLUMN classification_confidence REAL NOT NULL DEFAULT 0")
-                db.execSQL("CREATE INDEX IF NOT EXISTS index_conversations_inbox_category_date ON conversations (archived, is_scheduled, inbox_category, date)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_conversations_archived_is_scheduled_inbox_category_date ON conversations (archived, is_scheduled, inbox_category, date)")
             }
         }
 
