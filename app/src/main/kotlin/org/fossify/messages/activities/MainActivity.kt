@@ -474,6 +474,7 @@ class MainActivity : SimpleActivity() {
         }
 
         showFilteredConversations(updatePlaceholder = !cached)
+        updateRecentOtpCard()
     }
 
 
