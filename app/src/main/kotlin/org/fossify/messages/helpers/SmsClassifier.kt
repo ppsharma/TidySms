@@ -31,9 +31,6 @@ object SmsClassifier {
         if (texts.isEmpty()) return result(Category.UNCATEGORISED, "no message content", 0.0f)
 
         val header = headerType(sender)
-        if (header == HeaderType.PROMOTIONAL) return result(Category.PROMOTIONS, "TRAI header -P")
-        if (header == HeaderType.TRANSACTIONAL) return result(Category.TRANSACTIONS, "TRAI header -T")
-
         val joined = texts.joinToString(" ")
         val transactionHits = matchingSignals(transactionSignals, joined)
         val promotionHits = matchingSignals(promotionSignals, joined)
@@ -50,6 +47,12 @@ object SmsClassifier {
         }
         if (serviceHits.isNotEmpty()) {
             return Classification(Category.SERVICES, confidence(serviceHits.size, transactionHits.size), serviceHits)
+        }
+        when (header) {
+            HeaderType.PROMOTIONAL -> return result(Category.PROMOTIONS, "TRAI header -P")
+            HeaderType.TRANSACTIONAL, HeaderType.GOVERNMENT -> return result(Category.TRANSACTIONS, "TRAI header -T/G")
+            HeaderType.SERVICE -> return result(Category.SERVICES, "TRAI header -S")
+            HeaderType.UNKNOWN -> Unit
         }
         if (personalHits.size >= 2 || personalConversation.containsMatchIn(joined)) {
             return Classification(Category.PERSONAL, 0.72f, personalHits.ifEmpty { listOf("conversational phrase") })
