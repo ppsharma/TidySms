@@ -13,6 +13,8 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.provider.Telephony
 import android.text.TextUtils
 import androidx.appcompat.content.res.AppCompatResources
@@ -100,6 +102,12 @@ class MainActivity : SimpleActivity() {
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
     @Volatile private var isClassifyingThreads = false
+    private val inboxPageSize = 50
+    private var inboxPageOffset = 0
+    private var inboxHasMorePages = true
+    private var inboxPageLoading = false
+    private var inboxPageGeneration = 0
+    private var displayedInboxConversations = arrayListOf<Conversation>()
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -149,7 +157,7 @@ class MainActivity : SimpleActivity() {
         if (currentManualCategoryState != lastRenderedManualCategoryState) {
             showFilteredConversations()
         }
-        if (latestConversations.any { config.getCategoryForThread(it.threadId) == null }) {
+        if (latestConversations.any { it.inboxCategory == null }) {
             classifyUnclassifiedThreads(latestConversations)
         }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())
@@ -450,6 +458,17 @@ class MainActivity : SimpleActivity() {
             )
 
             binding.conversationsList.adapter = currAdapter
+            binding.conversationsList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+                    if (dy > 0 && layoutManager.findLastVisibleItemPosition() >=
+                        displayedInboxConversations.size - 8
+                    ) {
+                        loadNextInboxPage()
+                    }
+                }
+            })
             binding.conversationsList.itemAnimator = null
             if (areSystemAnimationsEnabled) {
                 binding.conversationsList.scheduleLayoutAnimation()
@@ -464,6 +483,7 @@ class MainActivity : SimpleActivity() {
     ) {
         latestConversations = ArrayList(conversations)
         hasLoadedConversations = true
+        migrateLegacyInboxCategories(conversations)
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the
             // loading placeholder and progress until we are done loading from telephony
@@ -500,42 +520,85 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
-        lastRenderedManualCategoryState = latestConversations.map { conversation ->
-            conversation.threadId to config.getCategoryForThread(conversation.threadId)?.name
+        lastRenderedManualCategoryState = latestConversations.map {
+            it.threadId to (it.inboxCategory ?: config.getCategoryForThread(it.threadId)?.name)
         }
-        val category = selectedCategory ?: SmsClassifier.Category.TRANSACTIONS
-        val sortedConversations = ArrayList(
-            latestConversations.filter { conversation ->
-                val storedCategory = config.getCategoryForThread(conversation.threadId)
-                storedCategory == category || (isClassifyingThreads && storedCategory == null)
-            }.sortedWith(
-                compareByDescending<Conversation> {
-                    config.pinnedConversations.contains(it.threadId.toString())
-                }.thenByDescending { it.date }
-            )
-        )
-        getOrCreateConversationsAdapter().updateConversations(sortedConversations) {
-            if (updatePlaceholder) showOrHidePlaceholder(sortedConversations.isEmpty())
-        }
-        if (updatePlaceholder) showOrHidePlaceholder(sortedConversations.isEmpty())
+        inboxPageGeneration++
+        inboxPageOffset = 0
+        inboxHasMorePages = true
+        displayedInboxConversations.clear()
+        loadInboxPage(reset = true, generation = inboxPageGeneration, updatePlaceholder = updatePlaceholder)
     }
 
-    /** Classify only threads without a stored result; category switching never performs work. */
+    private fun loadInboxPage(
+        reset: Boolean,
+        generation: Int = inboxPageGeneration,
+        updatePlaceholder: Boolean = true
+    ) {
+        if (inboxPageLoading || (!reset && !inboxHasMorePages)) return
+        inboxPageLoading = true
+        val category = (selectedCategory ?: SmsClassifier.Category.TRANSACTIONS).name
+        val offset = if (reset) 0 else inboxPageOffset
+        val pinnedIds = config.pinnedConversations.mapNotNull { it.toLongOrNull() }
+        ensureBackgroundThread {
+            val page = conversationsDB.getInboxPage(category, pinnedIds, inboxPageSize, offset)
+                .map { it.toConversation() }
+            runOnUiThread {
+                inboxPageLoading = false
+                if (generation != inboxPageGeneration) return@runOnUiThread
+                if (reset) displayedInboxConversations.clear()
+                displayedInboxConversations.addAll(page)
+                inboxPageOffset = offset + page.size
+                inboxHasMorePages = page.size == inboxPageSize
+                getOrCreateConversationsAdapter().updateConversations(ArrayList(displayedInboxConversations)) {
+                    if (updatePlaceholder) showOrHidePlaceholder(displayedInboxConversations.isEmpty())
+                }
+                if (updatePlaceholder) showOrHidePlaceholder(displayedInboxConversations.isEmpty())
+            }
+        }
+    }
+
+    private fun loadNextInboxPage() {
+        if (!inboxPageLoading && inboxHasMorePages) {
+            loadInboxPage(reset = false)
+        }
+    }
+
+    /** Copy pre-database classifications once; subsequent classifications live with the conversation row. */
+    private fun migrateLegacyInboxCategories(conversations: List<Conversation>) {
+        ensureBackgroundThread {
+            conversations.forEach { conversation ->
+                if (conversation.inboxCategory == null) {
+                    val legacy = config.getCategoryForThread(conversation.threadId)
+                    if (legacy != null) {
+                        val manual = config.isManualCategoryForThread(conversation.threadId)
+                        conversationsDB.updateInboxClassification(
+                            conversation.threadId, legacy.name, manual, 1, 1.0f
+                        )
+                        conversation.inboxCategory = legacy.name
+                        conversation.classificationManual = manual
+                        conversation.classifierVersion = 1
+                        conversation.classificationConfidence = 1.0f
+                    }
+                }
+            }
+            runOnUiThread { showFilteredConversations() }
+        }
+    }
+
+    /** Initial on-device classification; existing manual choices are never overwritten. */
     private fun classifyUnclassifiedThreads(conversations: List<Conversation>) {
         val pending = conversations.filter {
-            !it.isScheduled && config.getCategoryForThread(it.threadId) == null
+            !it.isScheduled && !it.classificationManual && it.inboxCategory == null
         }.sortedByDescending { it.date }
         if (pending.isEmpty() || isClassifyingThreads) return
         isClassifyingThreads = true
         runOnUiThread {
             showOrHideProgress(true)
-            showFilteredConversations()
         }
         ensureBackgroundThread {
-            pending.forEach { conversation ->
-                if (config.getCategoryForThread(conversation.threadId) != null) {
-                    return@forEach
-                }
+            val total = pending.size
+            pending.forEachIndexed { index, conversation ->
                 val sample = runCatching {
                     getMessages(
                         threadId = conversation.threadId,
@@ -544,11 +607,21 @@ class MainActivity : SimpleActivity() {
                     )
                 }.getOrDefault(arrayListOf())
                 val classification = SmsClassifier.classifyThread(
-                    messages = sample.filter { it.isReceivedMessage() }.map { it.body }.ifEmpty { sample.map { it.body } },
+                    messages = sample.filter { it.isReceivedMessage() }.map { it.body }
+                        .ifEmpty { sample.map { it.body } },
                     sender = conversation.phoneNumber,
                     isSavedContact = isSavedContactNumber(conversation.phoneNumber)
                 )
-                config.setCategoryForThread(conversation.threadId, classification.category)
+                conversationsDB.updateInboxClassification(
+                    conversation.threadId, classification.category.name, false, 1, classification.confidence
+                )
+                conversation.inboxCategory = classification.category.name
+                conversation.classifierVersion = 1
+                conversation.classificationConfidence = classification.confidence
+                if ((index + 1) % 25 == 0 || index == total - 1) {
+                    config.inboxInitializationProcessed = index + 1
+                    config.inboxInitializationTotal = total
+                }
             }
             runOnUiThread {
                 isClassifyingThreads = false
