@@ -17,6 +17,8 @@ class Config(context: Context) : BaseConfig(context) {
         private const val RECENT_OTP_MESSAGE = "recent_otp_message"
         private const val RECENT_OTP_THREAD = "recent_otp_thread"
         private const val RECENT_OTP_DISMISSED = "recent_otp_dismissed"
+        private const val INBOX_INITIALIZATION_PROCESSED = "inbox_initialization_processed"
+        private const val INBOX_INITIALIZATION_TOTAL = "inbox_initialization_total"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -65,6 +67,14 @@ class Config(context: Context) : BaseConfig(context) {
         }
         editor.apply()
     }
+
+    var inboxInitializationProcessed: Int
+        get() = prefs.getInt(INBOX_INITIALIZATION_PROCESSED, 0)
+        set(value) = prefs.edit().putInt(INBOX_INITIALIZATION_PROCESSED, value).apply()
+
+    var inboxInitializationTotal: Int
+        get() = prefs.getInt(INBOX_INITIALIZATION_TOTAL, 0)
+        set(value) = prefs.edit().putInt(INBOX_INITIALIZATION_TOTAL, value).apply()
 
     val recentOtp: String
         get() = prefs.getString(RECENT_OTP, "") ?: ""
