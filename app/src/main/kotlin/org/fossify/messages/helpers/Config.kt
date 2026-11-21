@@ -48,6 +48,17 @@ class Config(context: Context) : BaseConfig(context) {
         }.apply()
     }
 
+    fun pruneThreadCategories(activeThreadIds: Set<Long>) {
+        val editor = prefs.edit()
+        prefs.all.keys.filter {
+            it.startsWith(THREAD_CATEGORY_PREFIX) || it.startsWith(THREAD_CATEGORY_MANUAL_PREFIX)
+        }.forEach { key ->
+            val threadId = key.substringAfterLast('_').toLongOrNull()
+            if (threadId == null || threadId !in activeThreadIds) editor.remove(key)
+        }
+        editor.apply()
+    }
+
     var showCharacterCounter: Boolean
         get() = prefs.getBoolean(SHOW_CHARACTER_COUNTER, false)
         set(showCharacterCounter) = prefs.edit()
