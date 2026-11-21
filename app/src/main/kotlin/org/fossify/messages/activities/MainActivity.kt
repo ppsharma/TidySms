@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.WorkInfo
 import org.fossify.messages.workers.InboxClassificationWorker
 import android.provider.Telephony
 import android.text.TextUtils
@@ -105,6 +106,7 @@ class MainActivity : SimpleActivity() {
     private var hasLoadedConversations = false
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
+    private var inboxInitializationObserverAttached = false
     @Volatile private var isClassifyingThreads = false
     private val inboxPageSize = 50
     private var inboxPageOffset = 0
@@ -343,6 +345,36 @@ class MainActivity : SimpleActivity() {
             showFilteredConversations()
         }
         updateInboxCategoryStyles()
+        observeInboxInitialization()
+    }
+
+    private fun observeInboxInitialization() {
+        if (inboxInitializationObserverAttached) return
+        inboxInitializationObserverAttached = true
+        WorkManager.getInstance(this)
+            .getWorkInfosForUniqueWorkLiveData(InboxClassificationWorker.UNIQUE_WORK_NAME)
+            .observe(this) { workInfos ->
+                val info = workInfos.firstOrNull()
+                val active = info?.state == WorkInfo.State.RUNNING || info?.state == WorkInfo.State.ENQUEUED
+                if (active) {
+                    binding.conversationsProgressBar.show()
+                    if (displayedInboxConversations.isEmpty()) {
+                        val processed = info.progress.getInt(InboxClassificationWorker.KEY_PROCESSED, config.inboxInitializationProcessed)
+                        val total = info.progress.getInt(InboxClassificationWorker.KEY_TOTAL, config.inboxInitializationTotal)
+                        binding.noConversationsPlaceholder.beVisible()
+                        binding.noConversationsPlaceholder.text = if (total > 0) {
+                            getString(R.string.organizing_conversations_progress, processed, total)
+                        } else {
+                            getString(R.string.organizing_conversations)
+                        }
+                    }
+                } else {
+                    binding.conversationsProgressBar.hide()
+                    if (displayedInboxConversations.isEmpty() && latestConversations.isNotEmpty()) {
+                        showOrHidePlaceholder(true)
+                    }
+                }
+            }
     }
 
     private fun categoryViewId(category: SmsClassifier.Category) = when (category) {
