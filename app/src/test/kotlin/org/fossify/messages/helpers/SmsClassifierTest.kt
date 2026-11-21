@@ -89,6 +89,80 @@ class SmsClassifierTest {
             SmsClassifier.classifyTransaction(listOf("Your account was debited"), "9876543210", true))
     }
 
+    @Test fun miraeSipProcessedMessageIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Greetings. Your SIP of 20/03/2023 for Rs.4999.75 under Folio 70819410461 in Mirae Asset Hybrid - Equity Fund has been processed for NAV of 21.500 subject to realisation.",
+            "VM-MIRAE"
+        ).category)
+    }
+
+    @Test fun axisStpUnitsAllottedMessageIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Dear Investor, STP request from Axis Money Market Fund to Axis Small Cap Fund - Regular Growth has been processed and 163.018 units at NAV 61.34 are allotted under folio XXXXXXXX3902.",
+            "VK-AXISMF"
+        ).category)
+    }
+
+    @Test fun libertyInsurancePremiumNoticeIsTransaction() {
+        assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify(
+            "Dear Customer, Your PNR 2454833813 with PA Ins No 211623000010866222. Premium Rs 0.35. To update nominee visit libertyinsurance.in Liberty General Ins",
+            "AD-LIBGEN"
+        ).category)
+    }
+
+    @Test fun eyeglassesDiscountIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "Dear Customer! Get Eyeglasses & Sunglasses @ Rs 374. Use Code FLAT1000 T&C Apply",
+            "TX-EMEEYE"
+        ).category)
+    }
+
+    @Test fun workOnlineEarningsMessageIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "INFO work online, can earn Rs 3000-6000 easily, click for detail at Pine Labs",
+            "AD-PLUTUS"
+        ).category)
+    }
+
+    @Test fun homeVisitSofaCleaningAdvertisementIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "Dear Shivam Sofa wash Home Visit Time 9904857044 Chemical Washing of Sofa Seat CARPET CURTAIN BLIND CAR INTERIOR ROMAN ROLER Target Advtng",
+            "VM-SFADRY"
+        ).category)
+    }
+
+    @Test fun samsungProductLaunchAndCashbackMessagesArePromotions() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "Bring the sparkle in your life with Samsung Washing Machine. Upto 20% cashback during Big Laundry Days.",
+            "VM-SAMSNG"
+        ).category)
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "Get ready to unpack the latest Galaxy with us on February 1. Pre-reserve now and get exclusive benefits.",
+            "AX-SAMSNG"
+        ).category)
+    }
+
+    @Test fun samsungProductFeatureAdvertisementIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "Say goodbye to OOPS and WHAT! Cancel the noise with amazing Voice Focus feature in Galaxy A, starting at Rs 25999.",
+            "AX-SAMSNG"
+        ).category)
+    }
+
+    @Test fun hdfcErgoEvEducationLinkIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "HDFC ERGO's All Things EV makes everything about Electric Vehicles easy. Planning to buy an EV or want to know more about EVs, click here.",
+            "VM-HDFCGI"
+        ).category)
+    }
+
+    @Test fun rociaShoesSaleIsPromotion() {
+        assertEquals(SmsClassifier.Category.PROMOTIONS, SmsClassifier.classify(
+            "ROCIA SHOES LAST DAY of its Dazzling Wedding Week Enjoy 500 off 2500 & 1000 off 5000 at all stores.",
+            "VM-ROCIAS"
+        ).category)
+    }
+
     @Test fun bankOtpRemainsTransaction() {
         assertEquals(SmsClassifier.Category.TRANSACTIONS, SmsClassifier.classify("Your bank OTP is 123456", "AD-BANK").category)
     }
