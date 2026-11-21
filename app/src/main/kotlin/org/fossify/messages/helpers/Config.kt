@@ -9,7 +9,7 @@ import org.fossify.messages.models.Conversation
 class Config(context: Context) : BaseConfig(context) {
     companion object {
         private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
-        private const val MANUAL_SENDER_CATEGORY_PREFIX = "manual_sender_category_"
+        private const val THREAD_CATEGORY_PREFIX = "thread_category_"\n        private const val THREAD_CATEGORY_MANUAL_PREFIX = "thread_category_manual_"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -24,19 +24,27 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getString(SELECTED_INBOX_CATEGORY, "TRANSACTIONS") ?: "TRANSACTIONS"
         set(value) = prefs.edit().putString(SELECTED_INBOX_CATEGORY, value).apply()
 
-    fun getManualCategoryForSender(sender: String): SmsClassifier.Category? {
-        val key = sender.trim().lowercase().filter { it.isLetterOrDigit() || it == '+' }
-        if (key.isEmpty()) return null
-        val stored = prefs.getString(MANUAL_SENDER_CATEGORY_PREFIX + key, null) ?: return null
+    fun getCategoryForThread(threadId: Long): SmsClassifier.Category? {
+        val stored = prefs.getString(THREAD_CATEGORY_PREFIX + threadId, null) ?: return null
         return runCatching { SmsClassifier.Category.valueOf(stored) }.getOrNull()
     }
 
-    fun setManualCategoryForSender(sender: String, category: SmsClassifier.Category?) {
-        val key = sender.trim().lowercase().filter { it.isLetterOrDigit() || it == '+' }
-        if (key.isEmpty()) return
+    fun setCategoryForThread(threadId: Long, category: SmsClassifier.Category) {
+        prefs.edit().putString(THREAD_CATEGORY_PREFIX + threadId, category.name).apply()
+    }
+
+    fun isManualCategoryForThread(threadId: Long): Boolean =
+        prefs.getBoolean(THREAD_CATEGORY_MANUAL_PREFIX + threadId, false)
+
+    fun setManualCategoryForThread(threadId: Long, category: SmsClassifier.Category?) {
         prefs.edit().apply {
-            if (category == null) remove(MANUAL_SENDER_CATEGORY_PREFIX + key)
-            else putString(MANUAL_SENDER_CATEGORY_PREFIX + key, category.name)
+            if (category == null) {
+                remove(THREAD_CATEGORY_PREFIX + threadId)
+                remove(THREAD_CATEGORY_MANUAL_PREFIX + threadId)
+            } else {
+                putString(THREAD_CATEGORY_PREFIX + threadId, category.name)
+                putBoolean(THREAD_CATEGORY_MANUAL_PREFIX + threadId, true)
+            }
         }.apply()
     }
 
