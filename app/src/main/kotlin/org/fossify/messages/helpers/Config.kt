@@ -9,7 +9,8 @@ import org.fossify.messages.models.Conversation
 class Config(context: Context) : BaseConfig(context) {
     companion object {
         private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
-        private const val THREAD_CATEGORY_PREFIX = "thread_category_"\n        private const val THREAD_CATEGORY_MANUAL_PREFIX = "thread_category_manual_"
+        private const val THREAD_CATEGORY_PREFIX = "thread_category_"
+        private const val THREAD_CATEGORY_MANUAL_PREFIX = "thread_category_manual_"
 
         fun newInstance(context: Context) = Config(context)
     }
