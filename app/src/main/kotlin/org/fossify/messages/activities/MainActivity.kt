@@ -93,6 +93,7 @@ class MainActivity : SimpleActivity() {
     private var hasLoadedConversations = false
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
+    @Volatile private var isClassifyingThreads = false
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -140,6 +141,9 @@ class MainActivity : SimpleActivity() {
         }
         if (currentManualCategoryState != lastRenderedManualCategoryState) {
             showFilteredConversations()
+        }
+        if (latestConversations.any { config.getCategoryForThread(it.threadId) == null }) {
+            classifyUnclassifiedThreads(latestConversations)
         }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())
 
@@ -489,7 +493,8 @@ class MainActivity : SimpleActivity() {
         val category = selectedCategory ?: SmsClassifier.Category.TRANSACTIONS
         val sortedConversations = ArrayList(
             latestConversations.filter { conversation ->
-                config.getCategoryForThread(conversation.threadId) == category
+                val storedCategory = config.getCategoryForThread(conversation.threadId)
+                storedCategory == category || (isClassifyingThreads && storedCategory == null)
             }.sortedWith(
                 compareByDescending<Conversation> {
                     config.pinnedConversations.contains(it.threadId.toString())
@@ -504,28 +509,39 @@ class MainActivity : SimpleActivity() {
 
     /** Classify only threads without a stored result; category switching never performs work. */
     private fun classifyUnclassifiedThreads(conversations: List<Conversation>) {
-        runOnUiThread { showOrHideProgress(true) }
-        conversations.sortedByDescending { it.date }.forEach { conversation ->
-            if (conversation.isScheduled || config.getCategoryForThread(conversation.threadId) != null) {
-                return@forEach
-            }
-            val sample = runCatching {
-                getMessages(
-                    threadId = conversation.threadId,
-                    includeScheduledMessages = false,
-                    limit = 7
-                )
-            }.getOrDefault(arrayListOf())
-            val classification = SmsClassifier.classifyThread(
-                messages = sample.map { it.body },
-                sender = conversation.phoneNumber,
-                isSavedContact = isSavedContactNumber(conversation.phoneNumber)
-            )
-            config.setCategoryForThread(conversation.threadId, classification.category)
-        }
+        val pending = conversations.filter {
+            !it.isScheduled && config.getCategoryForThread(it.threadId) == null
+        }.sortedByDescending { it.date }
+        if (pending.isEmpty() || isClassifyingThreads) return
+        isClassifyingThreads = true
         runOnUiThread {
-            showOrHideProgress(false)
+            showOrHideProgress(true)
             showFilteredConversations()
+        }
+        ensureBackgroundThread {
+            pending.forEach { conversation ->
+                if (config.getCategoryForThread(conversation.threadId) != null) {
+                    return@forEach
+                }
+                val sample = runCatching {
+                    getMessages(
+                        threadId = conversation.threadId,
+                        includeScheduledMessages = false,
+                        limit = 7
+                    )
+                }.getOrDefault(arrayListOf())
+                val classification = SmsClassifier.classifyThread(
+                    messages = sample.map { it.body },
+                    sender = conversation.phoneNumber,
+                    isSavedContact = isSavedContactNumber(conversation.phoneNumber)
+                )
+                config.setCategoryForThread(conversation.threadId, classification.category)
+            }
+            runOnUiThread {
+                isClassifyingThreads = false
+                showOrHideProgress(false)
+                showFilteredConversations()
+            }
         }
     }
 
