@@ -418,7 +418,7 @@ class MainActivity : SimpleActivity() {
                 }
             }
 
-            config.pruneThreadCategories(cachedConversations.map { it.threadId }.toSet())
+            config.pruneThreadCategories((conversations.map { it.threadId } + cachedConversations.filter { it.isScheduled }.map { it.threadId }).toSet())
 
             val allConversations = ArrayList(conversationsDB.getNonArchived())
             runOnUiThread {
