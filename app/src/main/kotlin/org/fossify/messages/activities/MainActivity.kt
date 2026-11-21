@@ -529,41 +529,6 @@ class MainActivity : SimpleActivity() {
         }
     }
 
-    private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
-        lastRenderedManualCategoryState = latestConversations.map { conversation ->
-            conversation.phoneNumber to config.getManualCategoryForSender(conversation.phoneNumber)?.name
-        }
-        val sortedConversations = ArrayList(
-            latestConversations
-                .filter { conversation ->
-                    val category = selectedCategory
-                    category == null ||
-                        (config.getManualCategoryForSender(conversation.phoneNumber)
-                            ?: SmsClassifier.classify(
-                                conversation.snippet,
-                                conversation.phoneNumber,
-                                savedContactNumbers.any {
-                                    PhoneNumberUtils.compare(it, conversation.phoneNumber)
-                                }
-                            ).category) == category
-                }
-                .sortedWith(
-                    compareByDescending<Conversation> {
-                        config.pinnedConversations.contains(it.threadId.toString())
-                    }.thenByDescending { it.date }
-                )
-        )
-
-        getOrCreateConversationsAdapter().updateConversations(sortedConversations) {
-            if (updatePlaceholder) {
-                showOrHidePlaceholder(sortedConversations.isEmpty())
-            }
-        }
-        if (updatePlaceholder) {
-            showOrHidePlaceholder(sortedConversations.isEmpty())
-        }
-    }
-
     private fun showOrHideProgress(show: Boolean) {
         if (show) {
             binding.conversationsProgressBar.show()
