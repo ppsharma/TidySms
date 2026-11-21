@@ -3,7 +3,6 @@ package org.fossify.messages.activities
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
-import android.telephony.PhoneNumberUtils
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Color
@@ -92,8 +91,7 @@ class MainActivity : SimpleActivity() {
     private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
     private var latestConversations = arrayListOf<Conversation>()
     private var hasLoadedConversations = false
-    private var savedContactNumbers: Set<String> = emptySet()
-    private var lastRenderedManualCategoryState: List<Pair<String, String?>> = emptyList()
+    private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
@@ -138,7 +136,7 @@ class MainActivity : SimpleActivity() {
         updateTextColors(binding.mainCoordinator)
         updateInboxCategoryStyles()
         val currentManualCategoryState = latestConversations.map { conversation ->
-            conversation.phoneNumber to config.getManualCategoryForSender(conversation.phoneNumber)?.name
+            conversation.threadId to config.getCategoryForThread(conversation.threadId)?.name
         }
         if (currentManualCategoryState != lastRenderedManualCategoryState) {
             showFilteredConversations()
@@ -311,29 +309,32 @@ class MainActivity : SimpleActivity() {
     private fun setupInboxCategoryControls() {
         selectedCategory = runCatching {
             SmsClassifier.Category.valueOf(config.selectedInboxCategory)
-        }.getOrNull()
-        binding.inboxCategoryGroup.check(
-            when (selectedCategory) {
-                SmsClassifier.Category.TRANSACTIONS -> R.id.category_transactions
-                SmsClassifier.Category.PROMOTIONS -> R.id.category_promotions
-                SmsClassifier.Category.PERSONAL -> R.id.category_personal
-                SmsClassifier.Category.UNCATEGORISED -> R.id.category_uncategorised
-                null -> R.id.category_all
-            }
-        )
+        }.getOrDefault(SmsClassifier.Category.TRANSACTIONS)
+        binding.inboxCategoryGroup.check(categoryViewId(selectedCategory!!))
         binding.inboxCategoryGroup.setOnCheckedChangeListener { _, checkedId ->
-            selectedCategory = when (checkedId) {
-                R.id.category_transactions -> SmsClassifier.Category.TRANSACTIONS
-                R.id.category_promotions -> SmsClassifier.Category.PROMOTIONS
-                R.id.category_personal -> SmsClassifier.Category.PERSONAL
-                R.id.category_uncategorised -> SmsClassifier.Category.UNCATEGORISED
-                else -> null
-            }
-            config.selectedInboxCategory = selectedCategory?.name ?: "ALL"
+            selectedCategory = categoryForViewId(checkedId) ?: SmsClassifier.Category.TRANSACTIONS
+            config.selectedInboxCategory = selectedCategory!!.name
             updateInboxCategoryStyles()
             showFilteredConversations()
         }
         updateInboxCategoryStyles()
+    }
+
+    private fun categoryViewId(category: SmsClassifier.Category) = when (category) {
+        SmsClassifier.Category.TRANSACTIONS -> R.id.category_transactions
+        SmsClassifier.Category.SERVICES -> R.id.category_services
+        SmsClassifier.Category.PROMOTIONS -> R.id.category_promotions
+        SmsClassifier.Category.PERSONAL -> R.id.category_personal
+        SmsClassifier.Category.UNCATEGORISED -> R.id.category_uncategorised
+    }
+
+    private fun categoryForViewId(viewId: Int) = when (viewId) {
+        R.id.category_transactions -> SmsClassifier.Category.TRANSACTIONS
+        R.id.category_services -> SmsClassifier.Category.SERVICES
+        R.id.category_promotions -> SmsClassifier.Category.PROMOTIONS
+        R.id.category_personal -> SmsClassifier.Category.PERSONAL
+        R.id.category_uncategorised -> SmsClassifier.Category.UNCATEGORISED
+        else -> null
     }
 
     private fun getCachedConversations() {
@@ -367,16 +368,6 @@ class MainActivity : SimpleActivity() {
         ensureBackgroundThread {
             val privateContacts = MyContactsContentProvider.getSimpleContacts(this, privateCursor)
             val conversations = getConversations(privateContacts = privateContacts)
-            // Resolve contacts against both the database cache and freshly read provider
-            // conversations so first-launch classification does not miss saved contacts.
-            savedContactNumbers = (cachedConversations + conversations)
-                .asSequence()
-                .map { it.phoneNumber }
-                .filter { it.isNotBlank() }
-                .distinct()
-                .filter { isSavedContactNumber(it) }
-                .toSet()
-
             conversations.forEach { clonedConversation ->
                 val threadIds = cachedConversations.map { it.threadId }
                 if (!threadIds.contains(clonedConversation.threadId)) {
@@ -428,14 +419,7 @@ class MainActivity : SimpleActivity() {
                 setupConversations(allConversations)
             }
 
-            if (config.appRunCount == 1) {
-                conversations.map { it.threadId }.forEach { threadId ->
-                    val messages = getMessages(threadId, includeScheduledMessages = false)
-                    messages.chunked(30).forEach { currentMessages ->
-                        messagesDB.insertMessages(*currentMessages.toTypedArray())
-                    }
-                }
-            }
+            classifyUnclassifiedThreads(allConversations)
         }
     }
 
@@ -484,22 +468,64 @@ class MainActivity : SimpleActivity() {
         val backgroundColor = getProperBackgroundColor()
         val density = resources.displayMetrics.density
         val cornerRadius = 18f * density
-
         for (index in 0 until binding.inboxCategoryGroup.childCount) {
-            val button = binding.inboxCategoryGroup.getChildAt(index) as? android.widget.RadioButton
-                ?: continue
-            val isSelected = button.isChecked
+            val button = binding.inboxCategoryGroup.getChildAt(index) as? android.widget.RadioButton ?: continue
+            val selected = button.isChecked
             button.background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 setCornerRadius(cornerRadius)
-                setColor(if (isSelected) primaryColor else backgroundColor)
-                setStroke(
-                    (density).toInt().coerceAtLeast(1),
-                    if (isSelected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA)
-                )
+                setColor(if (selected) primaryColor else backgroundColor)
+                setStroke(density.toInt().coerceAtLeast(1), if (selected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA))
             }
-            button.setTextColor(if (isSelected) Color.WHITE else textColor)
-            button.alpha = if (isSelected) 1f else 0.88f
+            button.setTextColor(if (selected) Color.WHITE else textColor)
+            button.alpha = if (selected) 1f else 0.88f
+        }
+    }
+
+    private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
+        lastRenderedManualCategoryState = latestConversations.map { conversation ->
+            conversation.threadId to config.getCategoryForThread(conversation.threadId)?.name
+        }
+        val category = selectedCategory ?: SmsClassifier.Category.TRANSACTIONS
+        val sortedConversations = ArrayList(
+            latestConversations.filter { conversation ->
+                config.getCategoryForThread(conversation.threadId) == category
+            }.sortedWith(
+                compareByDescending<Conversation> {
+                    config.pinnedConversations.contains(it.threadId.toString())
+                }.thenByDescending { it.date }
+            )
+        )
+        getOrCreateConversationsAdapter().updateConversations(sortedConversations) {
+            if (updatePlaceholder) showOrHidePlaceholder(sortedConversations.isEmpty())
+        }
+        if (updatePlaceholder) showOrHidePlaceholder(sortedConversations.isEmpty())
+    }
+
+    /** Classify only threads without a stored result; category switching never performs work. */
+    private fun classifyUnclassifiedThreads(conversations: List<Conversation>) {
+        runOnUiThread { showOrHideProgress(true) }
+        conversations.sortedByDescending { it.date }.forEach { conversation ->
+            if (conversation.isScheduled || config.getCategoryForThread(conversation.threadId) != null) {
+                return@forEach
+            }
+            val sample = runCatching {
+                getMessages(
+                    threadId = conversation.threadId,
+                    includeScheduledMessages = false,
+                    limit = 7
+                )
+            }.getOrDefault(arrayListOf())
+            val classification = SmsClassifier.classifyThread(
+                messages = sample.map { it.body },
+                sender = conversation.phoneNumber,
+                isSavedContact = isSavedContactNumber(conversation.phoneNumber)
+            )
+            config.setCategoryForThread(conversation.threadId, classification.category)
+        }
+        runOnUiThread {
+            showOrHideProgress(false)
+            showFilteredConversations()
         }
     }
 
