@@ -39,11 +39,12 @@ object SmsClassifier {
         val promotionDominates = promotionHits.size >= 2 && promotionHits.size > transactionHits.size &&
             promotionHits.size >= serviceHits.size
 
-        if (promotionDominates || (promotionHits.isNotEmpty() && transactionHits.isEmpty() && serviceHits.isEmpty())) {
-            return Classification(Category.PROMOTIONS, confidence(promotionHits.size, maxOf(transactionHits.size, serviceHits.size)), promotionHits)
-        }
+        // Keep clear financial signals protected while refining Services and Promotions.
         if (transactionHits.isNotEmpty() && transactionHits.size >= serviceHits.size) {
             return Classification(Category.TRANSACTIONS, confidence(transactionHits.size, serviceHits.size), transactionHits)
+        }
+        if (promotionDominates || (promotionHits.isNotEmpty() && serviceHits.isEmpty())) {
+            return Classification(Category.PROMOTIONS, confidence(promotionHits.size, serviceHits.size), promotionHits)
         }
         if (serviceHits.isNotEmpty()) {
             return Classification(Category.SERVICES, confidence(serviceHits.size, transactionHits.size), serviceHits)
@@ -90,7 +91,9 @@ object SmsClassifier {
         "delivery" to Regex("\\b(delivery|delivered|out for delivery|shipment|tracking|dispatch)\\b", RegexOption.IGNORE_CASE),
         "booking" to Regex("\\b(booking|reservation|ticket|boarding|check.?in|itinerary)\\b", RegexOption.IGNORE_CASE),
         "telecom" to Regex("\\b(data pack|recharge|validity|data balance|network|missed call alert|voicemail|sim)\\b", RegexOption.IGNORE_CASE),
-        "service request" to Regex("\\b(service request|request registered|complaint|reference number|case id|appointment|scheduled service|renewal)\\b", RegexOption.IGNORE_CASE),
+        "service request" to Regex("\\b(service request|request registered|complaint|reference number|case id|appointment|scheduled service|renewal|team will visit|site visit|site survey|application status|application has been|application no)\\b", RegexOption.IGNORE_CASE),
+        "utilities" to Regex("\\b(electricity bill|power bill|bill for .* service number|bill has been generated|bill generated|roaming|international call|mobile data|data usage|missed call alert|now available)\\b", RegexOption.IGNORE_CASE),
+        "customer follow-up" to Regex("\\b(share your experience|feedback|enjoyed your .* order|track service details|service details|assigned counter|workshop)\\b", RegexOption.IGNORE_CASE),
         "order updates" to Regex("\\b(order confirmed|order placed|return picked|replacement|refund initiated)\\b", RegexOption.IGNORE_CASE)
     )
     private val promotionSignals = listOf(
@@ -98,7 +101,7 @@ object SmsClassifier {
         "marketing" to Regex("\\b(buy now|shop now|limited time|exclusive|mega|clearance|recommendation)\\b", RegexOption.IGNORE_CASE),
         "coupon" to Regex("\\b(coupon|promo code|voucher|cashback up to)\\b", RegexOption.IGNORE_CASE),
         "unsubscribe" to Regex("\\b(stop to unsubscribe|unsubscribe|opt.?out)\\b", RegexOption.IGNORE_CASE),
-        "promotional call-to-action" to Regex("\\b(book now|order now|click here|download the app|install the app)\\b", RegexOption.IGNORE_CASE),
+        "promotional call-to-action" to Regex("\\b(book now|order now|click here|download the app|install the app|showing interest|thank you for your interest|thanks for showing interest)\\b", RegexOption.IGNORE_CASE),
         "investment solicitation" to Regex("\\b(stock tip|buy shares|target price|multibagger)\\b", RegexOption.IGNORE_CASE)
     )
     private val personalSignals = listOf(
