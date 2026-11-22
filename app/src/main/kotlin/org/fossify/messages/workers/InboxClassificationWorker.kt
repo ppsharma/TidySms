@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import org.fossify.messages.R
-import org.fossify.messages.activities.MainActivity
 import androidx.work.Data
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -27,8 +26,16 @@ class InboxClassificationWorker(
 ) : Worker(appContext, params) {
 
     override fun doWork(): Result {
-        applicationContext.config.inboxInitializationComplete = false
-        postInitializationNotification(0, 0, completed = false)
+        val config = applicationContext.config
+
+        // A completed pass followed by a newly requested pass is a new progress
+        // session. An interrupted/retried pass must retain its durable progress.
+        if (config.inboxInitializationComplete) {
+            config.inboxInitializationProcessed = 0
+            config.inboxInitializationTotal = 0
+        }
+        config.inboxInitializationComplete = false
+
         val database = applicationContext.conversationsDB
         val conversations = database.getNonArchived().filter { !it.isScheduled }
         val total = conversations.size
@@ -36,9 +43,9 @@ class InboxClassificationWorker(
         // Migrate old SharedPreferences classifications before making any automatic choice.
         conversations.forEach { conversation ->
             if (conversation.inboxCategory == null) {
-                val oldCategory = applicationContext.config.getCategoryForThread(conversation.threadId)
+                val oldCategory = config.getCategoryForThread(conversation.threadId)
                 if (oldCategory != null) {
-                    val manual = applicationContext.config.isManualCategoryForThread(conversation.threadId)
+                    val manual = config.isManualCategoryForThread(conversation.threadId)
                     database.updateInboxClassification(
                         conversation.threadId, oldCategory.name, manual,
                         SmsClassifier.CLASSIFIER_VERSION, 1.0f
@@ -54,15 +61,22 @@ class InboxClassificationWorker(
             !it.classificationManual &&
                 (it.inboxCategory == null || it.classifierVersion < SmsClassifier.CLASSIFIER_VERSION)
         }
-        val processedBefore = total - pending.size
         val batch = pending.take(MAX_THREADS_PER_RUN)
-        applicationContext.config.inboxInitializationTotal = total
-        applicationContext.config.inboxInitializationProcessed = processedBefore
-        setProgressAsync(progressData(processedBefore, total))
-        postInitializationNotification(processedBefore, total, completed = false)
+
+        // Room is the source of truth. Retain a high-water mark so a transiently
+        // stale snapshot or retry cannot make the displayed progress move backwards.
+        val processedBefore = maxOf(
+            config.inboxInitializationProcessed,
+            total - pending.size
+        ).coerceAtMost(total)
+        val progressTotal = maxOf(total, processedBefore)
+        config.inboxInitializationTotal = progressTotal
+        config.inboxInitializationProcessed = processedBefore
+        publishProgress(processedBefore, progressTotal)
 
         batch.forEachIndexed { index, conversation ->
             if (isStopped) return Result.retry()
+
             val sample = runCatching {
                 applicationContext.getMessages(
                     threadId = conversation.threadId,
@@ -84,41 +98,64 @@ class InboxClassificationWorker(
                 SmsClassifier.CLASSIFIER_VERSION,
                 result.confidence
             )
-            val processed = processedBefore + index + 1
+
+            val calculated = processedBefore + index + 1
+            val processed = maxOf(config.inboxInitializationProcessed, calculated)
+                .coerceAtMost(progressTotal)
             if ((index + 1) % PROGRESS_UPDATE_INTERVAL == 0 || index == batch.lastIndex) {
-                applicationContext.config.inboxInitializationProcessed = processed
-                setProgressAsync(progressData(processed, total))
-                postInitializationNotification(processed, total, completed = false)
+                config.inboxInitializationProcessed = processed
+                publishProgress(processed, progressTotal)
             }
         }
 
         return if (pending.size > batch.size) {
+            // WorkManager retries this worker. The next execution resumes from Room
+            // and the persisted high-water mark; it must not publish a zero reset.
             Result.retry()
         } else {
-            applicationContext.config.inboxInitializationComplete = true
-            postInitializationNotification(total, total, completed = true)
+            config.inboxInitializationProcessed = progressTotal
+            config.inboxInitializationTotal = progressTotal
+            config.inboxInitializationComplete = true
+            postInitializationNotification(progressTotal, progressTotal, completed = true)
             Result.success()
         }
+    }
+
+    private fun publishProgress(processed: Int, total: Int) {
+        setProgressAsync(progressData(processed, total))
+        postInitializationNotification(processed, total, completed = false)
     }
 
     private fun postInitializationNotification(processed: Int, total: Int, completed: Boolean) {
         val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(
-                NotificationChannel(INITIALIZATION_CHANNEL, applicationContext.getString(R.string.inbox_initialization_channel), NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(
+                    INITIALIZATION_CHANNEL,
+                    applicationContext.getString(R.string.inbox_initialization_channel),
+                    NotificationManager.IMPORTANCE_LOW
+                )
             )
         }
         val launchIntent = applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
         val pendingIntent = launchIntent?.let {
-            PendingIntent.getActivity(applicationContext, INITIALIZATION_NOTIFICATION_ID, it,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.getActivity(
+                applicationContext,
+                INITIALIZATION_NOTIFICATION_ID,
+                it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
         }
         val title = applicationContext.getString(
             if (completed) R.string.inbox_initialization_complete else R.string.inbox_initialization_title
         )
-        val text = if (completed) applicationContext.getString(R.string.inbox_initialization_done, total)
-            else if (total > 0) applicationContext.getString(R.string.organizing_conversations_progress, processed, total)
-            else applicationContext.getString(R.string.organizing_conversations)
+        val text = if (completed) {
+            applicationContext.getString(R.string.inbox_initialization_done, total)
+        } else if (total > 0) {
+            applicationContext.getString(R.string.organizing_conversations_progress, processed, total)
+        } else {
+            applicationContext.getString(R.string.organizing_conversations)
+        }
         val notification = NotificationCompat.Builder(applicationContext, INITIALIZATION_CHANNEL)
             .setSmallIcon(R.drawable.ic_messenger)
             .setContentTitle(title)
