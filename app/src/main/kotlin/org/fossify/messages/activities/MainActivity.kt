@@ -575,7 +575,8 @@ class MainActivity : SimpleActivity() {
         binding.inboxCategoryScroll.beGone()
         binding.recentOtpCard.beGone()
         binding.mainMenu.requireToolbar().title = getString(R.string.show_spam)
-        binding.mainMenu.requireToolbar().menu.findItem(R.id.show_spam).title = getString(R.string.messages_title)
+        binding.mainMenu.requireToolbar().menu
+            .findItem(R.id.show_spam).title = getString(R.string.messages_title)
         updateBottomNavigationStyles()
         showFilteredConversations()
     }
@@ -584,7 +585,8 @@ class MainActivity : SimpleActivity() {
         isSpamFolder = false
         binding.inboxCategoryScroll.beVisible()
         binding.mainMenu.requireToolbar().title = getString(R.string.messages_title)
-        binding.mainMenu.requireToolbar().menu.findItem(R.id.show_spam).title = getString(R.string.show_spam)
+        binding.mainMenu.requireToolbar().menu
+            .findItem(R.id.show_spam).title = getString(R.string.show_spam)
         updateRecentOtpCard()
         updateBottomNavigationStyles()
         showFilteredConversations()

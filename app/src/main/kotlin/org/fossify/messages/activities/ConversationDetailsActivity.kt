@@ -176,11 +176,11 @@ class ConversationDetailsActivity : SimpleActivity() {
         val id = currentConversation.threadId
         fun categoryLabel(category: org.fossify.messages.helpers.SmsClassifier.Category?): String =
             when (category) {
-                org.fossify.messages.helpers.SmsClassifier.Category.TRANSACTIONS -> getString(R.string.category_transactions)
-                org.fossify.messages.helpers.SmsClassifier.Category.SERVICES -> getString(R.string.category_services)
-                org.fossify.messages.helpers.SmsClassifier.Category.PROMOTIONS -> getString(R.string.category_promotions)
+                SmsClassifier.Category.TRANSACTIONS -> getString(R.string.category_transactions)
+                SmsClassifier.Category.SERVICES -> getString(R.string.category_services)
+                SmsClassifier.Category.PROMOTIONS -> getString(R.string.category_promotions)
                 org.fossify.messages.helpers.SmsClassifier.Category.PERSONAL -> getString(R.string.category_personal)
-                org.fossify.messages.helpers.SmsClassifier.Category.UNCATEGORISED -> getString(R.string.category_uncategorised)
+                SmsClassifier.Category.UNCATEGORISED -> getString(R.string.category_uncategorised)
                 null -> getString(R.string.category_automatic)
             }
 
@@ -237,7 +237,11 @@ class ConversationDetailsActivity : SimpleActivity() {
 
     private fun setupSpamControl() {
         val current = conversation ?: return
-        val label = if (current.isSpam) R.string.remove_from_spam else R.string.mark_sender_spam
+        val label = if (current.isSpam) {
+            R.string.remove_from_spam
+        } else {
+            R.string.mark_sender_spam
+        }
         binding.senderSpam.text = getString(label)
         binding.senderSpam.setOnClickListener {
             val markAsSpam = !current.isSpam
