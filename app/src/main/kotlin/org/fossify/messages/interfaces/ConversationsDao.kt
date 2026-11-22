@@ -36,7 +36,13 @@ interface ConversationsDao {
     fun getAllWithMessagesInRecycleBin(): List<Conversation> =
         getAllWithMessagesInRecycleBinWithLatestSnippet().map { it.toConversation() }
 
-    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE is_spam = 1 AND archived = 0 ORDER BY date DESC")
+    @Query(
+        "SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
+            "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
+            "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC " +
+            "LIMIT 1) as new_snippet, * FROM conversations " +
+            "WHERE is_spam = 1 AND archived = 0 ORDER BY date DESC"
+    )
     fun getSpamWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     @Query("UPDATE conversations SET is_spam = :isSpam WHERE thread_id = :threadId")

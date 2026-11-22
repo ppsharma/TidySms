@@ -180,8 +180,13 @@ abstract class MessagesDatabase : RoomDatabase() {
 
         private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE conversations ADD COLUMN is_spam INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("CREATE INDEX IF NOT EXISTS index_conversations_is_spam_archived_date ON conversations (is_spam, archived, date)")
+                db.execSQL(
+                    "ALTER TABLE conversations ADD COLUMN is_spam INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_conversations_is_spam_archived_date " +
+                        "ON conversations (is_spam, archived, date)"
+                )
             }
         }
 

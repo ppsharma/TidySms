@@ -237,11 +237,15 @@ class ConversationDetailsActivity : SimpleActivity() {
 
     private fun setupSpamControl() {
         val current = conversation ?: return
-        binding.senderSpam.text = getString(if (current.isSpam) R.string.remove_from_spam else R.string.mark_sender_spam)
+        val label = if (current.isSpam) R.string.remove_from_spam else R.string.mark_sender_spam
+        binding.senderSpam.text = getString(label)
         binding.senderSpam.setOnClickListener {
             val markAsSpam = !current.isSpam
             AlertDialog.Builder(this)
-                .setMessage(if (markAsSpam) R.string.mark_sender_spam_confirmation else R.string.remove_sender_spam_confirmation)
+                .setMessage(
+                    if (markAsSpam) R.string.mark_sender_spam_confirmation
+                    else R.string.remove_sender_spam_confirmation
+                )
                 .setNegativeButton(org.fossify.commons.R.string.cancel, null)
                 .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
                     ensureBackgroundThread {

@@ -153,7 +153,11 @@ class SmsReceiver : BroadcastReceiver() {
                 OneTimeWorkRequestBuilder<InboxClassificationWorker>().build()
             )
         }
-        OtpUtils.extractOtp(body)?.let { context.config.saveRecentOtp(it, senderName.ifBlank { address }, newMessageId, threadId) }
+        OtpUtils.extractOtp(body)?.let { code ->
+            context.config.saveRecentOtp(
+                code, senderName.ifBlank { address }, newMessageId, threadId
+            )
+        }
 
         if (context.shouldUnarchive()) {
             context.updateConversationArchivedStatus(threadId, false)

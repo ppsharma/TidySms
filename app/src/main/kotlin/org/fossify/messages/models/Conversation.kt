@@ -5,7 +5,14 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "conversations", indices = [Index(value = ["thread_id"], unique = true), Index(value = ["archived", "is_scheduled", "inbox_category", "date"]), Index(value = ["is_spam", "archived", "date"])])
+@Entity(
+    tableName = "conversations",
+    indices = [
+        Index(value = ["thread_id"], unique = true),
+        Index(value = ["archived", "is_scheduled", "inbox_category", "date"]),
+        Index(value = ["is_spam", "archived", "date"])
+    ]
+)
 data class Conversation(
     @PrimaryKey @ColumnInfo(name = "thread_id") var threadId: Long,
     @ColumnInfo(name = "snippet") var snippet: String,

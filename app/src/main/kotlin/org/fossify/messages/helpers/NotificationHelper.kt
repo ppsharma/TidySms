@@ -126,7 +126,12 @@ class NotificationHelper(private val context: Context) {
         val otpCode = OtpUtils.extractOtp(body)
         if (otpCode != null) {
             val copyIntent = Intent(context, CopyOtpReceiver::class.java).putExtra(OTP_CODE, otpCode)
-            val copyPendingIntent = PendingIntent.getBroadcast(context, notificationId + 1, copyIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            val copyPendingIntent = PendingIntent.getBroadcast(
+                context,
+                notificationId + 1,
+                copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
             val otpNotification = NotificationCompat.Builder(context, notificationChannelId)
                 .setSmallIcon(R.drawable.ic_messenger)
                 .setContentTitle(context.getString(R.string.otp_notification_title))
@@ -138,7 +143,11 @@ class NotificationHelper(private val context: Context) {
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(alertOnlyOnce)
-                .addAction(org.fossify.commons.R.drawable.ic_copy_vector, context.getString(R.string.copy_otp), copyPendingIntent)
+                .addAction(
+                    org.fossify.commons.R.drawable.ic_copy_vector,
+                    context.getString(R.string.copy_otp),
+                    copyPendingIntent
+                )
                 .build()
             notificationManager.notify(notificationId, otpNotification)
             return
