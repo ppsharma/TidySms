@@ -48,6 +48,7 @@ object SmsClassifier {
     }
 
     /** Recent messages are considered together; the caller supplies newest-first or oldest-first samples. */
+    @Suppress("CyclomaticComplexMethod", "ReturnCount")
     fun classifyThread(messages: List<String>, sender: String, isSavedContact: Boolean = false): Classification {
         val texts = messages.filter { it.isNotBlank() }.takeLast(7)
         if (isSavedContact) return result(Category.PERSONAL, "saved contact")

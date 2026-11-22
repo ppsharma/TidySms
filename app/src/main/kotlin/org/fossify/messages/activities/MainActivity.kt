@@ -109,7 +109,6 @@ class MainActivity : SimpleActivity() {
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
     private var inboxInitializationObserverAttached = false
-    @Volatile private var isClassifyingThreads = false
     private val inboxPageSize = 100
     private var inboxPageOffset = 0
     private var inboxHasMorePages = true
@@ -199,6 +198,7 @@ class MainActivity : SimpleActivity() {
         }
     }
 
+    @Suppress("MagicNumber")
     private fun setupOptionsMenu() {
         binding.mainMenu.requireToolbar().inflateMenu(R.menu.menu_main)
         binding.mainMenu.toggleHideOnScroll(true)
@@ -394,8 +394,14 @@ class MainActivity : SimpleActivity() {
                 if (active) {
                     binding.conversationsProgressBar.show()
                     if (displayedInboxConversations.isEmpty()) {
-                        val processed = info.progress.getInt(InboxClassificationWorker.KEY_PROCESSED, config.inboxInitializationProcessed)
-                        val total = info.progress.getInt(InboxClassificationWorker.KEY_TOTAL, config.inboxInitializationTotal)
+                        val processed = info.progress.getInt(
+                            InboxClassificationWorker.KEY_PROCESSED,
+                            config.inboxInitializationProcessed
+                        )
+                        val total = info.progress.getInt(
+                            InboxClassificationWorker.KEY_TOTAL,
+                            config.inboxInitializationTotal
+                        )
                         binding.noConversationsPlaceholder.beVisible()
                         binding.noConversationsPlaceholder.text = if (total > 0) {
                             getString(R.string.organizing_conversations_progress, processed, total)
@@ -519,6 +525,7 @@ class MainActivity : SimpleActivity() {
         }
     }
 
+    @Suppress("MagicNumber")
     private fun getOrCreateConversationsAdapter(): ConversationsAdapter {
         var currAdapter = binding.conversationsList.adapter
         if (currAdapter == null) {
@@ -535,9 +542,9 @@ class MainActivity : SimpleActivity() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
                     val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
-                    if (dy > 0 && layoutManager.findLastVisibleItemPosition() >=
+                    val nearEnd = layoutManager.findLastVisibleItemPosition() >=
                         displayedInboxConversations.size - 8
-                    ) {
+                    if (dy > 0 && nearEnd) {
                         loadNextInboxPage()
                     }
                 }
@@ -651,7 +658,8 @@ class MainActivity : SimpleActivity() {
                 .map { it.toConversation() }
             runOnUiThread {
                 inboxPageLoading = false
-                if (generation != inboxPageGeneration) {
+                val requestIsStale = generation != inboxPageGeneration
+                if (requestIsStale) {
                     loadInboxPage(reset = true, generation = inboxPageGeneration, updatePlaceholder = updatePlaceholder)
                     return@runOnUiThread
                 }
@@ -694,6 +702,7 @@ class MainActivity : SimpleActivity() {
         )
     }
 
+    @Suppress("MagicNumber")
     private fun updateRecentOtpCard() {
         val card = binding.root.findViewById<android.view.View>(R.id.recent_otp_card) ?: return
         val codeView = binding.root.findViewById<android.widget.TextView>(R.id.recent_otp_code)

@@ -202,7 +202,11 @@ class NotificationHelper(private val context: Context) {
         )
             .setChannelId(notificationChannelId)
         if (copyOtpPendingIntent != null) {
-            builder.addAction(org.fossify.commons.R.drawable.ic_copy_vector, context.getString(R.string.copy_otp), copyOtpPendingIntent)
+            builder.addAction(
+                org.fossify.commons.R.drawable.ic_copy_vector,
+                context.getString(R.string.copy_otp),
+                copyOtpPendingIntent
+            )
         }
         builder.addAction(
             org.fossify.commons.R.drawable.ic_delete_vector,
