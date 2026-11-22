@@ -8,6 +8,7 @@ on:
       - development/phase-1-thread-classification
       - development/phase-2-inbox-otp-notifications
       - development/inbox-intelligence-initialization
+      - development/incoming-sms-intelligence-spam
 
 permissions:
   contents: read
