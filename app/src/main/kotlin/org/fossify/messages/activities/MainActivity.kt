@@ -96,9 +96,6 @@ import org.greenrobot.eventbus.ThreadMode
 class MainActivity : SimpleActivity() {
     private companion object {
         const val CLASSIFICATION_BACKOFF_SECONDS = 10L
-    }
-
-    private companion object {
         const val INBOX_PAGE_SIZE = 100
     }
 
