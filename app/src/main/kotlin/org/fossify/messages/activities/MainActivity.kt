@@ -95,6 +95,10 @@ import org.greenrobot.eventbus.ThreadMode
 @Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
     private companion object {
+        const val CLASSIFICATION_BACKOFF_SECONDS = 10L
+    }
+
+    private companion object {
         const val INBOX_PAGE_SIZE = 100
     }
 
@@ -700,7 +704,7 @@ class MainActivity : SimpleActivity() {
         val request = OneTimeWorkRequestBuilder<InboxClassificationWorker>()
             .setBackoffCriteria(
                 androidx.work.BackoffPolicy.LINEAR,
-                10,
+                CLASSIFICATION_BACKOFF_SECONDS,
                 java.util.concurrent.TimeUnit.SECONDS
             )
             .build()

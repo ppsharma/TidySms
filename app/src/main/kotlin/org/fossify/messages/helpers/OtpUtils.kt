@@ -10,11 +10,13 @@ object OtpUtils {
     )
     private val beforeKeyword = Regex(
         "([0-9]{4,8})[^A-Za-z0-9]{0,32}(?:is your|is the|for your|for this|as your)?" +
-            "\\s*(?:OTP|one[ -]?time password|verification code|security code|login code|passcode)\\b",
+            "\\s*(?:OTP|one[ -]?time password|verification code|security code|" +
+            "login code|passcode)\\b",
         RegexOption.IGNORE_CASE
     )
     private val useCode = Regex(
-        "(?:use|enter|verify with|share)\\s+([0-9]{4,8})\\s+(?:as|for)\\s+(?:your\\s+)?(?:OTP|verification code|security code)\\b",
+        "(?:use|enter|verify with|share)\\s+([0-9]{4,8})\\s+" +
+            "(?:as|for)\\s+(?:your\\s+)?(?:OTP|verification code|security code)\\b",
         RegexOption.IGNORE_CASE
     )
 
