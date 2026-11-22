@@ -39,6 +39,7 @@ import org.fossify.commons.extensions.convertToBitmap
 import org.fossify.commons.extensions.fadeIn
 import org.fossify.commons.extensions.formatDateOrTime
 import org.fossify.commons.extensions.getMyContactsCursor
+import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
@@ -555,7 +556,7 @@ class MainActivity : SimpleActivity() {
                 setColor(if (selected) primaryColor else backgroundColor)
                 setStroke(density.toInt().coerceAtLeast(1), if (selected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA))
             }
-            button.setTextColor(if (selected) Color.WHITE else textColor)
+            button.setTextColor(if (selected) primaryColor.getContrastColor() else textColor)
             button.alpha = if (selected) 1f else 0.88f
         }
     }
