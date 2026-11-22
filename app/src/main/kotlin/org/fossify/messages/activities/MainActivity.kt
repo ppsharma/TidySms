@@ -94,6 +94,10 @@ import org.greenrobot.eventbus.ThreadMode
 
 @Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
+    private companion object {
+        const val INBOX_PAGE_SIZE = 100
+    }
+
     override var isSearchBarEnabled = false
     
     private val MAKE_DEFAULT_APP_REQUEST = 1
@@ -109,7 +113,7 @@ class MainActivity : SimpleActivity() {
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
     private var inboxCategoryControlsInitialized = false
     private var inboxInitializationObserverAttached = false
-    private val inboxPageSize = 100
+    private val inboxPageSize = INBOX_PAGE_SIZE
     private var inboxPageOffset = 0
     private var inboxHasMorePages = true
     private var inboxPageLoading = false
@@ -514,7 +518,9 @@ class MainActivity : SimpleActivity() {
                 }
             }
 
-            config.pruneThreadCategories((conversations.map { it.threadId } + cachedConversations.filter { it.isScheduled }.map { it.threadId }).toSet())
+            val activeThreadIds = conversations.map { it.threadId } +
+                cachedConversations.filter { it.isScheduled }.map { it.threadId }
+            config.pruneThreadCategories(activeThreadIds.toSet())
 
             val allConversations = ArrayList(conversationsDB.getNonArchived())
             runOnUiThread {
@@ -613,7 +619,8 @@ class MainActivity : SimpleActivity() {
                 shape = GradientDrawable.RECTANGLE
                 setCornerRadius(cornerRadius)
                 setColor(if (selected) primaryColor else backgroundColor)
-                setStroke(density.toInt().coerceAtLeast(1), if (selected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA))
+                val strokeColor = if (selected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA)
+                setStroke(density.toInt().coerceAtLeast(1), strokeColor)
             }
             button.setTextColor(if (selected) primaryColor.getContrastColor() else textColor)
             button.alpha = if (selected) 1f else 0.88f
@@ -683,11 +690,13 @@ class MainActivity : SimpleActivity() {
 
     /** Schedule persistent background initialization; WorkManager resumes after process death. */
     private fun classifyUnclassifiedThreads(conversations: List<Conversation>) {
-        if (conversations.none {
-                !it.isScheduled && (it.inboxCategory == null ||
-                    (!it.classificationManual && it.classifierVersion < SmsClassifier.CLASSIFIER_VERSION))
-            }
-        ) return
+        val hasPendingClassification = conversations.any { conversation ->
+            val needsCategory = conversation.inboxCategory == null
+            val needsVersionUpdate = !conversation.classificationManual &&
+                conversation.classifierVersion < SmsClassifier.CLASSIFIER_VERSION
+            !conversation.isScheduled && (needsCategory || needsVersionUpdate)
+        }
+        if (!hasPendingClassification) return
         val request = OneTimeWorkRequestBuilder<InboxClassificationWorker>()
             .setBackoffCriteria(
                 androidx.work.BackoffPolicy.LINEAR,
@@ -736,8 +745,12 @@ class MainActivity : SimpleActivity() {
             }
             (this as? android.widget.TextView)?.setTextColor(primary)
         }
-        (binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss) as? android.widget.TextView)?.setTextColor(getProperTextColor())
-        (binding.root.findViewById<android.view.View>(R.id.recent_otp_delete) as? android.widget.TextView)?.setTextColor(getProperTextColor())
+        val dismissView = binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss)
+            as? android.widget.TextView
+        val deleteView = binding.root.findViewById<android.view.View>(R.id.recent_otp_delete)
+            as? android.widget.TextView
+        dismissView?.setTextColor(getProperTextColor())
+        deleteView?.setTextColor(getProperTextColor())
         codeView.text = code
         val elapsed = ((System.currentTimeMillis() - config.recentOtpTime).coerceAtLeast(0L) / 60000L)
         val relative = when {

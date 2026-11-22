@@ -12,19 +12,42 @@ interface ConversationsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOrUpdate(conversation: Conversation): Long
 
-    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0")
+    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
+        "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
+        "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
+        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0")
     fun getNonArchivedWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     fun getNonArchived(): List<Conversation> =
         getNonArchivedWithLatestSnippet().map { it.toConversation() }
 
-    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 AND is_scheduled = 0 AND (inbox_category = :category OR (inbox_category IS NULL AND :category = 'UNCATEGORISED')) ORDER BY CASE WHEN thread_id IN (:pinnedThreadIds) THEN 0 ELSE 1 END, COALESCE((SELECT MAX(messages.date) FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id), date) DESC, thread_id DESC LIMIT :pageSize OFFSET :offset")
-    fun getInboxPage(category: String, pinnedThreadIds: List<Long>, pageSize: Int, offset: Int): List<ConversationWithSnippetOverride>
+    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
+        "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
+        "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
+        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 " +
+        "AND is_scheduled = 0 AND (inbox_category = :category OR " +
+        "(inbox_category IS NULL AND :category = 'UNCATEGORISED')) " +
+        "ORDER BY CASE WHEN thread_id IN (:pinnedThreadIds) THEN 0 ELSE 1 END, " +
+        "COALESCE((SELECT MAX(messages.date) FROM messages LEFT OUTER JOIN recycle_bin_messages " +
+        "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
+        "AND messages.thread_id = conversations.thread_id), date) DESC, thread_id DESC " +
+        "LIMIT :pageSize OFFSET :offset")
+    fun getInboxPage(
+        category: String,
+        pinnedThreadIds: List<Long>,
+        pageSize: Int,
+        offset: Int
+    ): List<ConversationWithSnippetOverride>
 
-    @Query("SELECT COUNT(*) FROM conversations WHERE archived = 0 AND is_spam = 0 AND is_scheduled = 0 AND (inbox_category = :category OR (inbox_category IS NULL AND :category = 'UNCATEGORISED'))")
+    @Query("SELECT COUNT(*) FROM conversations WHERE archived = 0 AND is_spam = 0 " +
+        "AND is_scheduled = 0 AND (inbox_category = :category OR " +
+        "(inbox_category IS NULL AND :category = 'UNCATEGORISED'))")
     fun getInboxCategoryCount(category: String): Int
 
-    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 1")
+    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
+        "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
+        "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
+        "as new_snippet, * FROM conversations WHERE archived = 1")
     fun getAllArchivedWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     fun getAllArchived(): List<Conversation> =
@@ -57,13 +80,16 @@ interface ConversationsDao {
     @Query("SELECT * FROM conversations WHERE title LIKE :text OR phone_number LIKE :text")
     fun getConversationsWithText(text: String): List<Conversation>
 
-    @Query("UPDATE conversations SET inbox_category = :category, classification_manual = :manual, classifier_version = :version, classification_confidence = :confidence WHERE thread_id = :threadId")
+    @Query("UPDATE conversations SET inbox_category = :category, classification_manual = :manual, " +
+        "classifier_version = :version, classification_confidence = :confidence " +
+        "WHERE thread_id = :threadId")
     fun updateInboxClassification(threadId: Long, category: String?, manual: Boolean, version: Int, confidence: Float)
 
     @Query("UPDATE conversations SET classifier_version = 0 WHERE thread_id = :threadId AND classification_manual = 0")
     fun markThreadForReclassification(threadId: Long)
 
-    @Query("UPDATE conversations SET inbox_category = :category, classification_manual = 1, classifier_version = :version, classification_confidence = 1 WHERE thread_id = :threadId")
+    @Query("UPDATE conversations SET inbox_category = :category, classification_manual = 1, " +
+        "classifier_version = :version, classification_confidence = 1 WHERE thread_id = :threadId")
     fun applyManualCategory(threadId: Long, category: String, version: Int)
 
     @Query("UPDATE conversations SET read = 1 WHERE thread_id = :threadId")
