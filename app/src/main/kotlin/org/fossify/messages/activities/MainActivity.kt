@@ -335,6 +335,7 @@ class MainActivity : SimpleActivity() {
         checkWhatsNewDialog()
         storeStateVariables()
         if (!inboxCategoryControlsInitialized) {
+            setupBottomNavigation()
             setupInboxCategoryControls()
             binding.noConversationsPlaceholder2.setOnClickListener {
                 launchNewConversation()
@@ -345,6 +346,21 @@ class MainActivity : SimpleActivity() {
             inboxCategoryControlsInitialized = true
         }
         getCachedConversations()
+    }
+
+    private fun setupBottomNavigation() {
+        binding.messagesTab.setOnClickListener { showInboxFolder() }
+        binding.spamTab.setOnClickListener { showSpamFolder() }
+        binding.settingsTab.setOnClickListener { launchSettings() }
+        updateBottomNavigationStyles()
+    }
+
+    private fun updateBottomNavigationStyles() {
+        val selectedColor = getProperPrimaryColor()
+        val normalColor = getProperTextColor()
+        binding.messagesTab.setTextColor(if (isSpamFolder) normalColor else selectedColor)
+        binding.spamTab.setTextColor(if (isSpamFolder) selectedColor else normalColor)
+        binding.settingsTab.setTextColor(normalColor)
     }
 
     private fun setupInboxCategoryControls() {
@@ -560,6 +576,7 @@ class MainActivity : SimpleActivity() {
         binding.recentOtpCard.beGone()
         binding.mainMenu.requireToolbar().title = getString(R.string.show_spam)
         binding.mainMenu.requireToolbar().menu.findItem(R.id.show_spam).title = getString(R.string.messages_title)
+        updateBottomNavigationStyles()
         showFilteredConversations()
     }
 
@@ -569,6 +586,7 @@ class MainActivity : SimpleActivity() {
         binding.mainMenu.requireToolbar().title = getString(R.string.messages_title)
         binding.mainMenu.requireToolbar().menu.findItem(R.id.show_spam).title = getString(R.string.show_spam)
         updateRecentOtpCard()
+        updateBottomNavigationStyles()
         showFilteredConversations()
     }
 
