@@ -115,7 +115,7 @@ object SmsClassifier {
         "government compliance" to Regex("\\b(itr|income tax|gst|cpc|e-?voting|aadhaar|challan)\\b", RegexOption.IGNORE_CASE),
         "mutual fund allocation" to Regex("\\b(sip|stp|mutual fund|nav|units? allotted|folio)\\b", RegexOption.IGNORE_CASE),
         "insurance premium" to Regex("\\b(insurance premium|premium rs\\.?|premium of rs\\.?|policy premium|premium paid)\\b", RegexOption.IGNORE_CASE),
-        "insurance policy issuance" to Regex("\\b(policy (no\\.?|number)?|policy has been issued|policy issued|domestic policy|policy copy)\\b", RegexOption.IGNORE_CASE),
+        "insurance policy issuance" to Regex("\\b(policy\\s+(no\\.?|number)\\b|policy\\s+[A-Z0-9/-]+\\s+(has been\\s+)?issued|policy has been issued|policy issued|domestic policy|policy copy)\\b", RegexOption.IGNORE_CASE),
         "tax deduction" to Regex("\\b(tds|tax deducted at source|26as|form 16|cumulative tds|quarter ending)\\b", RegexOption.IGNORE_CASE),
         "invoice" to Regex("\\b(invoice no\\.?|invoice number|invoice created|tax invoice)\\b", RegexOption.IGNORE_CASE)
     )
@@ -133,9 +133,9 @@ object SmsClassifier {
         "financial risk notice" to Regex("\\b(unregulated|highly risky|regulatory recourse|crypto.{0,12}nft|nfts? are)\\b", RegexOption.IGNORE_CASE)
     )
     private val promotionSignals = listOf(
-        "offer" to Regex("\\b(offer|offers|deal|deals|sale|discount|save up to|gift coupon)\\b", RegexOption.IGNORE_CASE),
-        "marketing" to Regex("\\b(buy now|shop now|limited time|exclusive|mega|clearance|recommendation)\\b", RegexOption.IGNORE_CASE),
-        "coupon" to Regex("\\b(coupon|promo code|voucher|cashback up to)\\b", RegexOption.IGNORE_CASE),
+        "offer" to Regex("\\b(offer|offers|deal|deals|sale|discount|save up to|gift coupon|last day|wedding week|off\\s+\\d+\\s+off\\s+\\d+)\\b", RegexOption.IGNORE_CASE),
+        "marketing" to Regex("\\b(buy now|shop now|limited time|exclusive|mega|clearance|recommendation|pre-reserve|exclusive benefits|starting at rs\\.?|cashback|planning to buy|know more)\\b", RegexOption.IGNORE_CASE),
+        "coupon" to Regex("\\b(coupon|promo code|use code|voucher|cashback up to)\\b", RegexOption.IGNORE_CASE),
         "unsubscribe" to Regex("\\b(stop to unsubscribe|unsubscribe|opt.?out)\\b", RegexOption.IGNORE_CASE),
         "promotional call-to-action" to Regex("\\b(book now|order now|click here|download the app|install the app|showing interest|thank you for your interest|thanks for showing interest)\\b", RegexOption.IGNORE_CASE),
         "investment solicitation" to Regex("\\b(stock tip|buy shares|target price|multibagger)\\b", RegexOption.IGNORE_CASE),
