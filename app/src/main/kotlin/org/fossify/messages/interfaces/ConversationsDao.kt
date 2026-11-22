@@ -12,16 +12,16 @@ interface ConversationsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOrUpdate(conversation: Conversation): Long
 
-    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 0")
+    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0")
     fun getNonArchivedWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     fun getNonArchived(): List<Conversation> =
         getNonArchivedWithLatestSnippet().map { it.toConversation() }
 
-    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 0 AND is_scheduled = 0 AND (inbox_category = :category OR (inbox_category IS NULL AND :category = 'UNCATEGORISED')) ORDER BY CASE WHEN thread_id IN (:pinnedThreadIds) THEN 0 ELSE 1 END, COALESCE((SELECT MAX(messages.date) FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id), date) DESC, thread_id DESC LIMIT :pageSize OFFSET :offset")
+    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 AND is_scheduled = 0 AND (inbox_category = :category OR (inbox_category IS NULL AND :category = 'UNCATEGORISED')) ORDER BY CASE WHEN thread_id IN (:pinnedThreadIds) THEN 0 ELSE 1 END, COALESCE((SELECT MAX(messages.date) FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id), date) DESC, thread_id DESC LIMIT :pageSize OFFSET :offset")
     fun getInboxPage(category: String, pinnedThreadIds: List<Long>, pageSize: Int, offset: Int): List<ConversationWithSnippetOverride>
 
-    @Query("SELECT COUNT(*) FROM conversations WHERE archived = 0 AND is_scheduled = 0 AND (inbox_category = :category OR (inbox_category IS NULL AND :category = 'UNCATEGORISED'))")
+    @Query("SELECT COUNT(*) FROM conversations WHERE archived = 0 AND is_spam = 0 AND is_scheduled = 0 AND (inbox_category = :category OR (inbox_category IS NULL AND :category = 'UNCATEGORISED'))")
     fun getInboxCategoryCount(category: String): Int
 
     @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE archived = 1")
@@ -35,6 +35,12 @@ interface ConversationsDao {
 
     fun getAllWithMessagesInRecycleBin(): List<Conversation> =
         getAllWithMessagesInRecycleBinWithLatestSnippet().map { it.toConversation() }
+
+    @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) as new_snippet, * FROM conversations WHERE is_spam = 1 AND archived = 0 ORDER BY date DESC")
+    fun getSpamWithLatestSnippet(): List<ConversationWithSnippetOverride>
+
+    @Query("UPDATE conversations SET is_spam = :isSpam WHERE thread_id = :threadId")
+    fun setSpam(threadId: Long, isSpam: Boolean)
 
     @Query("SELECT * FROM conversations WHERE thread_id = :threadId")
     fun getConversationWithThreadId(threadId: Long): Conversation?

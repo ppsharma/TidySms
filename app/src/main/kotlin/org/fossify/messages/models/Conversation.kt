@@ -23,6 +23,7 @@ data class Conversation(
     @ColumnInfo(name = "classification_manual", defaultValue = "0") var classificationManual: Boolean = false,
     @ColumnInfo(name = "classifier_version", defaultValue = "0") var classifierVersion: Int = 0,
     @ColumnInfo(name = "classification_confidence", defaultValue = "0") var classificationConfidence: Float = 0f,
+    @ColumnInfo(name = "is_spam", defaultValue = "0") var isSpam: Boolean = false,
 ) {
     companion object {
         fun areItemsTheSame(old: Conversation, new: Conversation): Boolean =
@@ -40,6 +41,6 @@ data class Conversation(
                 old.inboxCategory == new.inboxCategory &&
                 old.classificationManual == new.classificationManual &&
                 old.classifierVersion == new.classifierVersion &&
-                old.classificationConfidence == new.classificationConfidence
+                old.classificationConfidence == new.classificationConfidence && old.isSpam == new.isSpam
     }
 }

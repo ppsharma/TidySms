@@ -1279,7 +1279,8 @@ fun Context.insertOrUpdateConversation(
             inboxCategory = cachedConv.inboxCategory,
             classificationManual = cachedConv.classificationManual,
             classifierVersion = cachedConv.classifierVersion,
-            classificationConfidence = cachedConv.classificationConfidence
+            classificationConfidence = cachedConv.classificationConfidence,
+            isSpam = cachedConv.isSpam
         )
     }
     conversationsDB.insertOrUpdate(updatedConv)

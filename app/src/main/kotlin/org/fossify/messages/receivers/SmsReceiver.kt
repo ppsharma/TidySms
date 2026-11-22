@@ -143,13 +143,16 @@ class SmsReceiver : BroadcastReceiver() {
         )
 
         context.messagesDB.insertOrUpdate(message)
-        // Only this thread needs fresh classification; preserve explicit manual choices.
-        context.conversationsDB.markThreadForReclassification(threadId)
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            InboxClassificationWorker.UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
-            OneTimeWorkRequestBuilder<InboxClassificationWorker>().build()
-        )
+        val storedConversation = context.conversationsDB.getConversationWithThreadId(threadId)
+        if (storedConversation?.isSpam == true) return
+        // Routine incoming SMS must not restart the full inbox scan.
+        if (storedConversation?.inboxCategory == null) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                InboxClassificationWorker.UNIQUE_WORK_NAME,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                OneTimeWorkRequestBuilder<InboxClassificationWorker>().build()
+            )
+        }
         OtpUtils.extractOtp(body)?.let { context.config.saveRecentOtp(it, senderName.ifBlank { address }, newMessageId, threadId) }
 
         if (context.shouldUnarchive()) {
