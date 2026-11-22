@@ -67,6 +67,7 @@ class ConversationDetailsActivity : SimpleActivity() {
             runOnUiThread {
                 setupTextViews()
                 setupSenderCategory()
+                setupSpamControl()
                 setupParticipants()
                 setupCustomNotifications()
             }
@@ -228,6 +229,28 @@ class ConversationDetailsActivity : SimpleActivity() {
                         }
                         config.setManualCategoryForThread(id, chosenCategory)
                         runOnUiThread { refreshCategoryLabel() }
+                    }
+                }
+                .show()
+        }
+    }
+
+    private fun setupSpamControl() {
+        val current = conversation ?: return
+        binding.senderSpam.text = getString(if (current.isSpam) R.string.remove_from_spam else R.string.mark_sender_spam)
+        binding.senderSpam.setOnClickListener {
+            val markAsSpam = !current.isSpam
+            AlertDialog.Builder(this)
+                .setMessage(if (markAsSpam) R.string.mark_sender_spam_confirmation else R.string.remove_sender_spam_confirmation)
+                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                    ensureBackgroundThread {
+                        conversationsDB.setSpam(threadId, markAsSpam)
+                        conversation = conversationsDB.getConversationWithThreadId(threadId)
+                        runOnUiThread {
+                            setupSpamControl()
+                            setResult(RESULT_OK)
+                        }
                     }
                 }
                 .show()

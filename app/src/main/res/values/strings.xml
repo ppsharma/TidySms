@@ -7,6 +7,13 @@
     <string name="messages_title">Messages</string>
     <string name="recent_otp">Recent OTP</string>
     <string name="copy_otp">Copy OTP</string>
+    <string name="otp_notification_title">Your OTP</string>
+    <string name="show_spam">Spam</string>
+    <string name="mark_sender_spam">Mark sender as Spam</string>
+    <string name="remove_from_spam">Remove sender from Spam</string>
+    <string name="mark_sender_spam_confirmation">Move this sender and future messages from them to Spam?</string>
+    <string name="remove_sender_spam_confirmation">Move this sender back to your inbox?</string>
+    <string name="no_spam_conversations">No senders in Spam</string>
     <string name="dismiss">Dismiss</string>
     <string name="delete_otp">Delete</string>
     <string name="delete_otp_confirmation">Delete this OTP message?</string>

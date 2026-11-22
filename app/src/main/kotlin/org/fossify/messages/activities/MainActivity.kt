@@ -103,6 +103,7 @@ class MainActivity : SimpleActivity() {
     private var lastSearchedText = ""
     private var bus: EventBus? = null
     private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
+    private var isSpamFolder = false
     private var latestConversations = arrayListOf<Conversation>()
     private var hasLoadedConversations = false
     private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
@@ -233,6 +234,9 @@ class MainActivity : SimpleActivity() {
             when (menuItem.itemId) {
                 R.id.show_recycle_bin -> launchRecycleBin()
                 R.id.show_archived -> launchArchivedConversations()
+                R.id.show_spam -> {
+                    if (isSpamFolder) showInboxFolder() else showSpamFolder()
+                }
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false
@@ -550,6 +554,24 @@ class MainActivity : SimpleActivity() {
     }
 
 
+    private fun showSpamFolder() {
+        isSpamFolder = true
+        binding.inboxCategoryScroll.beGone()
+        binding.recentOtpCard.beGone()
+        binding.mainMenu.requireToolbar().title = getString(R.string.show_spam)
+        binding.mainMenu.requireToolbar().menu.findItem(R.id.show_spam).title = getString(R.string.messages_title)
+        showFilteredConversations()
+    }
+
+    private fun showInboxFolder() {
+        isSpamFolder = false
+        binding.inboxCategoryScroll.beVisible()
+        binding.mainMenu.requireToolbar().title = getString(R.string.messages_title)
+        binding.mainMenu.requireToolbar().menu.findItem(R.id.show_spam).title = getString(R.string.show_spam)
+        updateRecentOtpCard()
+        showFilteredConversations()
+    }
+
     @Suppress("MagicNumber")
     private fun updateInboxCategoryStyles() {
         val primaryColor = getProperPrimaryColor()
@@ -572,6 +594,18 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
+        if (isSpamFolder) {
+            ensureBackgroundThread {
+                val spam = conversationsDB.getSpamWithLatestSnippet().map { it.toConversation() }
+                runOnUiThread {
+                    getOrCreateConversationsAdapter().updateConversations(ArrayList(spam)) {
+                        if (updatePlaceholder) showOrHidePlaceholder(spam.isEmpty())
+                    }
+                    if (updatePlaceholder) showOrHidePlaceholder(spam.isEmpty())
+                }
+            }
+            return
+        }
         lastRenderedManualCategoryState = latestConversations.map {
             it.threadId to config.getCategoryForThread(it.threadId)?.name
         }
