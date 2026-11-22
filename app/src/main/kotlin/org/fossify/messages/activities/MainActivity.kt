@@ -708,8 +708,17 @@ class MainActivity : SimpleActivity() {
     private fun showOrHidePlaceholder(show: Boolean) {
         binding.conversationsFastscroller.beGoneIf(show)
         binding.noConversationsPlaceholder.beVisibleIf(show)
-        binding.noConversationsPlaceholder.text = getString(R.string.no_conversations_found)
-        binding.noConversationsPlaceholder2.beVisibleIf(show)
+        binding.noConversationsPlaceholder.text = getString(
+            if (latestConversations.isNotEmpty()) {
+                R.string.no_conversations_in_category
+            } else {
+                R.string.no_conversations_found
+            }
+        )
+        // A category can be empty while the rest of the inbox is populated or
+        // still being classified. Never invite the user to start a conversation
+        // just because the selected category has no matches.
+        binding.noConversationsPlaceholder2.beVisibleIf(show && latestConversations.isEmpty())
     }
 
     private fun fadeOutSearch() {
