@@ -35,6 +35,7 @@ import org.fossify.messages.dialogs.ExportMessagesDialog
 import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.emptyMessagesRecycleBin
 import org.fossify.messages.extensions.messagesDB
+import org.fossify.messages.helpers.CrashLogger
 import org.fossify.messages.helpers.FILE_SIZE_100_KB
 import org.fossify.messages.helpers.FILE_SIZE_1_MB
 import org.fossify.messages.helpers.FILE_SIZE_200_KB
@@ -119,6 +120,7 @@ class SettingsActivity : SimpleActivity() {
         setupAppPasswordProtection()
         setupMessagesExport()
         setupMessagesImport()
+        setupShareCrashReport()
         updateTextColors(binding.settingsNestedScrollview)
 
         if (
@@ -152,6 +154,22 @@ class SettingsActivity : SimpleActivity() {
     private fun setupMessagesImport() {
         binding.settingsImportMessagesHolder.setOnClickListener {
             getContent.launch(messageImportFileTypes.toTypedArray())
+        }
+    }
+
+    private fun setupShareCrashReport() {
+        binding.settingsShareCrashReportHolder.setOnClickListener {
+            val report = CrashLogger.readReports(this)
+            if (report == null) {
+                toast(R.string.no_crash_report)
+            } else {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_report_subject))
+                    putExtra(Intent.EXTRA_TEXT, report)
+                }
+                startActivity(Intent.createChooser(shareIntent, getString(R.string.share_crash_report)))
+            }
         }
     }
 

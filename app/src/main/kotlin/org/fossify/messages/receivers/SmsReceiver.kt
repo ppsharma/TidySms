@@ -12,6 +12,7 @@ import org.fossify.commons.helpers.SimpleContactsHelper
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.PhoneNumber
 import org.fossify.commons.models.SimpleContact
+import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getNameFromAddress
 import org.fossify.messages.extensions.getNotificationBitmap
@@ -19,6 +20,11 @@ import org.fossify.messages.extensions.getThreadId
 import org.fossify.messages.extensions.insertNewSMS
 import org.fossify.messages.extensions.insertOrUpdateConversation
 import org.fossify.messages.extensions.messagesDB
+import org.fossify.messages.extensions.conversationsDB
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import org.fossify.messages.workers.InboxClassificationWorker
 import org.fossify.messages.extensions.shouldUnarchive
 import org.fossify.messages.extensions.showReceivedMessageNotification
 import org.fossify.messages.extensions.updateConversationArchivedStatus
@@ -26,6 +32,7 @@ import org.fossify.messages.helpers.ReceiverUtils.isMessageFilteredOut
 import org.fossify.messages.helpers.refreshConversations
 import org.fossify.messages.helpers.refreshMessages
 import org.fossify.messages.models.Message
+import org.fossify.messages.helpers.OtpUtils
 
 class SmsReceiver : BroadcastReceiver() {
 
@@ -136,6 +143,21 @@ class SmsReceiver : BroadcastReceiver() {
         )
 
         context.messagesDB.insertOrUpdate(message)
+        val storedConversation = context.conversationsDB.getConversationWithThreadId(threadId)
+        if (storedConversation?.isSpam == true) return
+        // Routine incoming SMS must not restart the full inbox scan.
+        if (storedConversation?.inboxCategory == null) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                InboxClassificationWorker.UNIQUE_WORK_NAME,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                OneTimeWorkRequestBuilder<InboxClassificationWorker>().build()
+            )
+        }
+        OtpUtils.extractOtp(body)?.let { code ->
+            context.config.saveRecentOtp(
+                code, senderName.ifBlank { address }, newMessageId, threadId
+            )
+        }
 
         if (context.shouldUnarchive()) {
             context.updateConversationArchivedStatus(threadId, false)

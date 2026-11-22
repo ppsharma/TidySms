@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Messages</string>
+    <string name="sender_category">Message category</string>
+    <string name="category_automatic">Automatic</string>
+    <string name="category_manual">Manual</string>
+    <string name="sender_category_value">%1$s · %2$s</string>
+    <string name="messages_title">Messages</string>
+    <string name="recent_otp">Recent OTP</string>
+    <string name="copy_otp">Copy OTP</string>
+    <string name="otp_notification_title">Your OTP</string>
+    <string name="show_spam">Spam</string>
+    <string name="mark_sender_spam">Mark sender as Spam</string>
+    <string name="remove_from_spam">Remove sender from Spam</string>
+    <string name="mark_sender_spam_confirmation">Move this sender and future messages from them to Spam?</string>
+    <string name="remove_sender_spam_confirmation">Move this sender back to your inbox?</string>
+    <string name="no_spam_conversations">No senders in Spam</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="delete_otp">Delete</string>
+    <string name="delete_otp_confirmation">Delete this OTP message?</string>
+    <string name="category_transactions">Transactions</string>
+    <string name="category_services">Services</string>
+    <string name="category_promotions">Promotions</string>
+    <string name="category_personal">Personal</string>
+    <string name="category_uncategorised">Uncategorized</string>
+    <string name="category_all">All</string>
+    <string name="app_launcher_name">TidySms</string>
+    <string name="share_crash_report">Share crash report</string>
+    <string name="crash_report_subject">TidySMS crash report</string>
+    <string name="no_crash_report">No crash report is available</string>
     <string name="type_a_message">Type a message…</string>
     <string name="message_not_sent_short">Message not sent</string>
     <string name="message_not_sent_touch_retry">Not sent. Touch to retry.</string>
@@ -8,6 +34,7 @@
     <string name="add_person">Add Person</string>
     <string name="attachment">Attachment</string>
     <string name="no_conversations_found">No stored conversations have been found</string>
+    <string name="no_conversations_in_category">No conversations in this category</string>
     <string name="start_conversation">Start a conversation</string>
     <string name="reply">Reply</string>
     <string name="show_character_counter">Show a character counter at writing messages</string>
@@ -187,4 +214,10 @@
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
     -->
+    <string name="inbox_initialization_channel">Inbox setup</string>
+    <string name="inbox_initialization_title">Organising your TidySms inbox</string>
+    <string name="inbox_initialization_complete">Inbox ready</string>
+    <string name="inbox_initialization_done">Organised %1$d conversations</string>
+    <string name="organizing_conversations">Organising your inbox…</string>
+    <string name="organizing_conversations_progress">Organising conversations: %1$d of %2$d</string>
 </resources>

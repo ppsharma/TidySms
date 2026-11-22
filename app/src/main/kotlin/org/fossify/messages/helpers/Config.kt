@@ -5,8 +5,22 @@ import org.fossify.commons.helpers.BaseConfig
 import org.fossify.messages.extensions.getDefaultKeyboardHeight
 import org.fossify.messages.models.Conversation
 
+@Suppress("TooManyFunctions")
 class Config(context: Context) : BaseConfig(context) {
     companion object {
+        private const val SELECTED_INBOX_CATEGORY = "selected_inbox_category"
+        private const val THREAD_CATEGORY_PREFIX = "thread_category_"
+        private const val THREAD_CATEGORY_MANUAL_PREFIX = "thread_category_manual_"
+        private const val RECENT_OTP = "recent_otp"
+        private const val RECENT_OTP_SENDER = "recent_otp_sender"
+        private const val RECENT_OTP_TIME = "recent_otp_time"
+        private const val RECENT_OTP_MESSAGE = "recent_otp_message"
+        private const val RECENT_OTP_THREAD = "recent_otp_thread"
+        private const val RECENT_OTP_DISMISSED = "recent_otp_dismissed"
+        private const val INBOX_INITIALIZATION_PROCESSED = "inbox_initialization_processed"
+        private const val INBOX_INITIALIZATION_TOTAL = "inbox_initialization_total"
+        private const val INBOX_INITIALIZATION_COMPLETE = "inbox_initialization_complete"
+
         fun newInstance(context: Context) = Config(context)
     }
 
@@ -15,6 +29,77 @@ class Config(context: Context) : BaseConfig(context) {
     }
 
     fun getUseSIMIdAtNumber(number: String) = prefs.getInt(USE_SIM_ID_PREFIX + number, 0)
+
+    var selectedInboxCategory: String
+        get() = prefs.getString(SELECTED_INBOX_CATEGORY, "TRANSACTIONS") ?: "TRANSACTIONS"
+        set(value) = prefs.edit().putString(SELECTED_INBOX_CATEGORY, value).apply()
+
+    fun getCategoryForThread(threadId: Long): SmsClassifier.Category? {
+        val stored = prefs.getString(THREAD_CATEGORY_PREFIX + threadId, null) ?: return null
+        return runCatching { SmsClassifier.Category.valueOf(stored) }.getOrNull()
+    }
+
+    fun setCategoryForThread(threadId: Long, category: SmsClassifier.Category) {
+        prefs.edit().putString(THREAD_CATEGORY_PREFIX + threadId, category.name).apply()
+    }
+
+    fun isManualCategoryForThread(threadId: Long): Boolean =
+        prefs.getBoolean(THREAD_CATEGORY_MANUAL_PREFIX + threadId, false)
+
+    fun setManualCategoryForThread(threadId: Long, category: SmsClassifier.Category?) {
+        prefs.edit().apply {
+            if (category == null) {
+                remove(THREAD_CATEGORY_PREFIX + threadId)
+                remove(THREAD_CATEGORY_MANUAL_PREFIX + threadId)
+            } else {
+                putString(THREAD_CATEGORY_PREFIX + threadId, category.name)
+                putBoolean(THREAD_CATEGORY_MANUAL_PREFIX + threadId, true)
+            }
+        }.apply()
+    }
+
+    fun pruneThreadCategories(activeThreadIds: Set<Long>) {
+        val editor = prefs.edit()
+        prefs.all.keys.filter {
+            it.startsWith(THREAD_CATEGORY_PREFIX) || it.startsWith(THREAD_CATEGORY_MANUAL_PREFIX)
+        }.forEach { key ->
+            val threadId = key.substringAfterLast('_').toLongOrNull()
+            if (threadId == null || threadId !in activeThreadIds) editor.remove(key)
+        }
+        editor.apply()
+    }
+
+    var inboxInitializationProcessed: Int
+        get() = prefs.getInt(INBOX_INITIALIZATION_PROCESSED, 0)
+        set(value) = prefs.edit().putInt(INBOX_INITIALIZATION_PROCESSED, value).apply()
+
+    var inboxInitializationTotal: Int
+        get() = prefs.getInt(INBOX_INITIALIZATION_TOTAL, 0)
+        set(value) = prefs.edit().putInt(INBOX_INITIALIZATION_TOTAL, value).apply()
+
+    var inboxInitializationComplete: Boolean
+        get() = prefs.getBoolean(INBOX_INITIALIZATION_COMPLETE, false)
+        set(value) = prefs.edit().putBoolean(INBOX_INITIALIZATION_COMPLETE, value).apply()
+
+    val recentOtp: String
+        get() = prefs.getString(RECENT_OTP, "") ?: ""
+    val recentOtpSender: String
+        get() = prefs.getString(RECENT_OTP_SENDER, "") ?: ""
+    val recentOtpTime: Long
+        get() = prefs.getLong(RECENT_OTP_TIME, 0L)
+    val recentOtpMessageId: Long
+        get() = prefs.getLong(RECENT_OTP_MESSAGE, 0L)
+    val recentOtpThreadId: Long
+        get() = prefs.getLong(RECENT_OTP_THREAD, 0L)
+    var isRecentOtpDismissed: Boolean
+        get() = prefs.getBoolean(RECENT_OTP_DISMISSED, false)
+        set(value) = prefs.edit().putBoolean(RECENT_OTP_DISMISSED, value).apply()
+
+    fun saveRecentOtp(code: String, sender: String, messageId: Long, threadId: Long) {
+        prefs.edit().putString(RECENT_OTP, code).putString(RECENT_OTP_SENDER, sender)
+            .putLong(RECENT_OTP_TIME, System.currentTimeMillis()).putLong(RECENT_OTP_MESSAGE, messageId)
+            .putLong(RECENT_OTP_THREAD, threadId).putBoolean(RECENT_OTP_DISMISSED, false).apply()
+    }
 
     var showCharacterCounter: Boolean
         get() = prefs.getBoolean(SHOW_CHARACTER_COUNTER, false)

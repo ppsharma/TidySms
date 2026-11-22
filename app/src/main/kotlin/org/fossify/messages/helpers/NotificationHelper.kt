@@ -24,8 +24,11 @@ import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.shortcutHelper
 import org.fossify.messages.messaging.isShortCodeWithLetters
 import org.fossify.messages.receivers.DeleteSmsReceiver
+import org.fossify.messages.receivers.CopyOtpReceiver
 import org.fossify.messages.receivers.DirectReplyReceiver
 import org.fossify.messages.receivers.MarkAsReadReceiver
+import org.fossify.messages.helpers.OtpUtils
+import org.fossify.messages.helpers.OTP_CODE
 
 class NotificationHelper(private val context: Context) {
 
@@ -120,6 +123,41 @@ class NotificationHelper(private val context: Context) {
                 .build()
         }
 
+        val otpCode = OtpUtils.extractOtp(body)
+        if (otpCode != null) {
+            val copyIntent = Intent(context, CopyOtpReceiver::class.java).putExtra(OTP_CODE, otpCode)
+            val copyPendingIntent = PendingIntent.getBroadcast(
+                context,
+                notificationId + 1,
+                copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val otpNotification = NotificationCompat.Builder(context, notificationChannelId)
+                .setSmallIcon(R.drawable.ic_messenger)
+                .setContentTitle(context.getString(R.string.otp_notification_title))
+                .setContentText(otpCode)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(otpCode))
+                .setContentIntent(contentPendingIntent)
+                .setColor(context.getProperPrimaryColor())
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(alertOnlyOnce)
+                .addAction(
+                    org.fossify.commons.R.drawable.ic_copy_vector,
+                    context.getString(R.string.copy_otp),
+                    copyPendingIntent
+                )
+                .build()
+            notificationManager.notify(notificationId, otpNotification)
+            return
+        }
+        val copyOtpPendingIntent = otpCode?.let { code ->
+            val copyIntent = Intent(context, CopyOtpReceiver::class.java).putExtra(OTP_CODE, code)
+            PendingIntent.getBroadcast(context, notificationId + 1, copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+
         val largeIcon = bitmap ?: if (sender != null) {
             SimpleContactsHelper(context).getContactLetterIcon(sender)
         } else {
@@ -163,13 +201,18 @@ class NotificationHelper(private val context: Context) {
             markAsReadPendingIntent
         )
             .setChannelId(notificationChannelId)
-        if (isNoReplySms) {
+        if (copyOtpPendingIntent != null) {
             builder.addAction(
-                org.fossify.commons.R.drawable.ic_delete_vector,
-                context.getString(org.fossify.commons.R.string.delete),
-                deleteSmsPendingIntent
-            ).setChannelId(notificationChannelId)
+                org.fossify.commons.R.drawable.ic_copy_vector,
+                context.getString(R.string.copy_otp),
+                copyOtpPendingIntent
+            )
         }
+        builder.addAction(
+            org.fossify.commons.R.drawable.ic_delete_vector,
+            context.getString(org.fossify.commons.R.string.delete),
+            deleteSmsPendingIntent
+        ).setChannelId(notificationChannelId)
 
         var shortcut = context.shortcutHelper.getShortcut(threadId)
         if (shortcut == null) {

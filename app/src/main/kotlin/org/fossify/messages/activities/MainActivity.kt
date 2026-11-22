@@ -3,11 +3,23 @@ package org.fossify.messages.activities
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
+import androidx.appcompat.app.AlertDialog
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkInfo
+import org.fossify.messages.workers.InboxClassificationWorker
 import android.provider.Telephony
 import android.text.TextUtils
 import androidx.appcompat.content.res.AppCompatResources
@@ -27,6 +39,7 @@ import org.fossify.commons.extensions.convertToBitmap
 import org.fossify.commons.extensions.fadeIn
 import org.fossify.commons.extensions.formatDateOrTime
 import org.fossify.commons.extensions.getMyContactsCursor
+import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
@@ -62,7 +75,12 @@ import org.fossify.messages.extensions.conversationsDB
 import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getMessages
 import org.fossify.messages.extensions.insertOrUpdateConversation
+import org.fossify.messages.extensions.isSavedContactNumber
 import org.fossify.messages.extensions.messagesDB
+import org.fossify.messages.helpers.SmsClassifier
+import org.fossify.messages.helpers.MESSAGE_ID
+import org.fossify.messages.helpers.IS_MMS
+import org.fossify.messages.receivers.DeleteSmsReceiver
 import org.fossify.messages.helpers.SEARCHED_MESSAGE_ID
 import org.fossify.messages.helpers.THREAD_ID
 import org.fossify.messages.helpers.THREAD_TITLE
@@ -74,8 +92,14 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
+@Suppress("LargeClass")
 class MainActivity : SimpleActivity() {
-    override var isSearchBarEnabled = true
+    private companion object {
+        const val CLASSIFICATION_BACKOFF_SECONDS = 10L
+        const val INBOX_PAGE_SIZE = 100
+    }
+
+    override var isSearchBarEnabled = false
     
     private val MAKE_DEFAULT_APP_REQUEST = 1
 
@@ -83,6 +107,19 @@ class MainActivity : SimpleActivity() {
     private var storedFontSize = 0
     private var lastSearchedText = ""
     private var bus: EventBus? = null
+    private var selectedCategory: SmsClassifier.Category? = SmsClassifier.Category.TRANSACTIONS
+    private var isSpamFolder = false
+    private var latestConversations = arrayListOf<Conversation>()
+    private var hasLoadedConversations = false
+    private var lastRenderedManualCategoryState: List<Pair<Long, String?>> = emptyList()
+    private var inboxCategoryControlsInitialized = false
+    private var inboxInitializationObserverAttached = false
+    private val inboxPageSize = INBOX_PAGE_SIZE
+    private var inboxPageOffset = 0
+    private var inboxHasMorePages = true
+    private var inboxPageLoading = false
+    private var inboxPageGeneration = 0
+    private var displayedInboxConversations = arrayListOf<Conversation>()
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -124,6 +161,17 @@ class MainActivity : SimpleActivity() {
         }
 
         updateTextColors(binding.mainCoordinator)
+        updateInboxCategoryStyles()
+        updateRecentOtpCard()
+        val currentManualCategoryState = latestConversations.map { conversation ->
+            conversation.threadId to config.getCategoryForThread(conversation.threadId)?.name
+        }
+        if (currentManualCategoryState != lastRenderedManualCategoryState) {
+            getCachedConversations()
+        }
+        if (!config.inboxInitializationComplete && latestConversations.any { it.inboxCategory == null }) {
+            classifyUnclassifiedThreads(latestConversations)
+        }
         binding.searchHolder.setBackgroundColor(getProperBackgroundColor())
 
         val properPrimaryColor = getProperPrimaryColor()
@@ -155,12 +203,24 @@ class MainActivity : SimpleActivity() {
         }
     }
 
+    @Suppress("MagicNumber")
     private fun setupOptionsMenu() {
         binding.mainMenu.requireToolbar().inflateMenu(R.menu.menu_main)
         binding.mainMenu.toggleHideOnScroll(true)
         binding.mainMenu.setupMenu()
 
+        val toolbar = binding.mainMenu.requireToolbar()
+        toolbar.title = getString(R.string.messages_title)
+
+        // Keep the normal header title visible; reveal the input only while searching.
+        binding.mainMenu.binding.topToolbarSearch.alpha = 0f
+        binding.mainMenu.onSearchOpenListener = {
+            toolbar.title = ""
+            binding.mainMenu.binding.topToolbarSearch.animate().alpha(1f).setDuration(120).start()
+        }
         binding.mainMenu.onSearchClosedListener = {
+            binding.mainMenu.binding.topToolbarSearch.animate().alpha(0f).setDuration(120).start()
+            toolbar.title = getString(R.string.messages_title)
             fadeOutSearch()
         }
 
@@ -179,6 +239,9 @@ class MainActivity : SimpleActivity() {
             when (menuItem.itemId) {
                 R.id.show_recycle_bin -> launchRecycleBin()
                 R.id.show_archived -> launchArchivedConversations()
+                R.id.show_spam -> {
+                    if (isSpamFolder) showInboxFolder() else showSpamFolder()
+                }
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false
@@ -276,20 +339,113 @@ class MainActivity : SimpleActivity() {
     private fun initMessenger() {
         checkWhatsNewDialog()
         storeStateVariables()
+        if (!inboxCategoryControlsInitialized) {
+            setupBottomNavigation()
+            setupInboxCategoryControls()
+            binding.noConversationsPlaceholder2.setOnClickListener {
+                launchNewConversation()
+            }
+            binding.conversationsFab.setOnClickListener {
+                launchNewConversation()
+            }
+            inboxCategoryControlsInitialized = true
+        }
         getCachedConversations()
-        binding.noConversationsPlaceholder2.setOnClickListener {
-            launchNewConversation()
-        }
+    }
 
-        binding.conversationsFab.setOnClickListener {
-            launchNewConversation()
+    private fun setupBottomNavigation() {
+        binding.messagesTab.setOnClickListener { showInboxFolder() }
+        binding.spamTab.setOnClickListener { showSpamFolder() }
+        binding.settingsTab.setOnClickListener { launchSettings() }
+        updateBottomNavigationStyles()
+    }
+
+    private fun updateBottomNavigationStyles() {
+        val selectedColor = getProperPrimaryColor()
+        val normalColor = getProperTextColor()
+        binding.messagesTab.setTextColor(if (isSpamFolder) normalColor else selectedColor)
+        binding.spamTab.setTextColor(if (isSpamFolder) selectedColor else normalColor)
+        binding.settingsTab.setTextColor(normalColor)
+    }
+
+    private fun setupInboxCategoryControls() {
+        selectedCategory = runCatching {
+            SmsClassifier.Category.valueOf(config.selectedInboxCategory)
+        }.getOrDefault(SmsClassifier.Category.TRANSACTIONS)
+        binding.inboxCategoryGroup.check(categoryViewId(selectedCategory!!))
+        binding.inboxCategoryGroup.setOnCheckedChangeListener { _, checkedId ->
+            selectedCategory = categoryForViewId(checkedId) ?: SmsClassifier.Category.TRANSACTIONS
+            config.selectedInboxCategory = selectedCategory!!.name
+            updateInboxCategoryStyles()
+            updateRecentOtpCard()
+            showFilteredConversations()
         }
+        updateInboxCategoryStyles()
+        observeInboxInitialization()
+    }
+
+    private fun observeInboxInitialization() {
+        if (inboxInitializationObserverAttached) return
+        inboxInitializationObserverAttached = true
+        WorkManager.getInstance(this)
+            .getWorkInfosForUniqueWorkLiveData(InboxClassificationWorker.UNIQUE_WORK_NAME)
+            .observe(this) { workInfos ->
+                val info = workInfos.firstOrNull()
+                if (info == null) {
+                    binding.conversationsProgressBar.hide()
+                    return@observe
+                }
+                val active = info.state == WorkInfo.State.RUNNING || info.state == WorkInfo.State.ENQUEUED
+                if (active) {
+                    binding.conversationsProgressBar.show()
+                    if (displayedInboxConversations.isEmpty()) {
+                        val processed = info.progress.getInt(
+                            InboxClassificationWorker.KEY_PROCESSED,
+                            config.inboxInitializationProcessed
+                        )
+                        val total = info.progress.getInt(
+                            InboxClassificationWorker.KEY_TOTAL,
+                            config.inboxInitializationTotal
+                        )
+                        binding.noConversationsPlaceholder.beVisible()
+                        binding.noConversationsPlaceholder.text = if (total > 0) {
+                            getString(R.string.organizing_conversations_progress, processed, total)
+                        } else {
+                            getString(R.string.organizing_conversations)
+                        }
+                    }
+                } else {
+                    binding.conversationsProgressBar.hide()
+                    if (info.state == WorkInfo.State.SUCCEEDED) {
+                        showFilteredConversations()
+                    } else if (displayedInboxConversations.isEmpty() && latestConversations.isNotEmpty()) {
+                        showOrHidePlaceholder(true)
+                    }
+                }
+            }
+    }
+
+    private fun categoryViewId(category: SmsClassifier.Category) = when (category) {
+        SmsClassifier.Category.TRANSACTIONS -> R.id.category_transactions
+        SmsClassifier.Category.SERVICES -> R.id.category_services
+        SmsClassifier.Category.PROMOTIONS -> R.id.category_promotions
+        SmsClassifier.Category.PERSONAL -> R.id.category_personal
+        SmsClassifier.Category.UNCATEGORISED -> R.id.category_uncategorised
+    }
+
+    private fun categoryForViewId(viewId: Int) = when (viewId) {
+        R.id.category_transactions -> SmsClassifier.Category.TRANSACTIONS
+        R.id.category_services -> SmsClassifier.Category.SERVICES
+        R.id.category_promotions -> SmsClassifier.Category.PROMOTIONS
+        R.id.category_personal -> SmsClassifier.Category.PERSONAL
+        R.id.category_uncategorised -> SmsClassifier.Category.UNCATEGORISED
+        else -> null
     }
 
     private fun getCachedConversations() {
         ensureBackgroundThread {
             val conversations = try {
-                conversationsDB.getNonArchived().toMutableList() as ArrayList<Conversation>
+                ArrayList(conversationsDB.getNonArchived())
             } catch (_: Exception) {
                 ArrayList()
             }
@@ -303,7 +459,7 @@ class MainActivity : SimpleActivity() {
             runOnUiThread {
                 setupConversations(conversations, cached = true)
                 getNewConversations(
-                    (conversations + archived).toMutableList() as ArrayList<Conversation>
+                    ArrayList(conversations + archived)
                 )
             }
             conversations.forEach {
@@ -317,11 +473,10 @@ class MainActivity : SimpleActivity() {
         ensureBackgroundThread {
             val privateContacts = MyContactsContentProvider.getSimpleContacts(this, privateCursor)
             val conversations = getConversations(privateContacts = privateContacts)
-
             conversations.forEach { clonedConversation ->
                 val threadIds = cachedConversations.map { it.threadId }
                 if (!threadIds.contains(clonedConversation.threadId)) {
-                    conversationsDB.insertOrUpdate(clonedConversation)
+                    insertOrUpdateConversation(clonedConversation)
                     cachedConversations.add(clonedConversation)
                 }
             }
@@ -364,22 +519,20 @@ class MainActivity : SimpleActivity() {
                 }
             }
 
-            val allConversations = conversationsDB.getNonArchived() as ArrayList<Conversation>
+            val activeThreadIds = conversations.map { it.threadId } +
+                cachedConversations.filter { it.isScheduled }.map { it.threadId }
+            config.pruneThreadCategories(activeThreadIds.toSet())
+
+            val allConversations = ArrayList(conversationsDB.getNonArchived())
             runOnUiThread {
                 setupConversations(allConversations)
             }
 
-            if (config.appRunCount == 1) {
-                conversations.map { it.threadId }.forEach { threadId ->
-                    val messages = getMessages(threadId, includeScheduledMessages = false)
-                    messages.chunked(30).forEach { currentMessages ->
-                        messagesDB.insertMessages(*currentMessages.toTypedArray())
-                    }
-                }
-            }
+            classifyUnclassifiedThreads(allConversations)
         }
     }
 
+    @Suppress("MagicNumber")
     private fun getOrCreateConversationsAdapter(): ConversationsAdapter {
         var currAdapter = binding.conversationsList.adapter
         if (currAdapter == null) {
@@ -392,6 +545,18 @@ class MainActivity : SimpleActivity() {
             )
 
             binding.conversationsList.adapter = currAdapter
+            binding.conversationsList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+                    val nearEnd = layoutManager.findLastVisibleItemPosition() >=
+                        displayedInboxConversations.size - 8
+                    if (dy > 0 && nearEnd) {
+                        loadNextInboxPage()
+                    }
+                }
+            })
+            binding.conversationsList.itemAnimator = null
             if (areSystemAnimationsEnabled) {
                 binding.conversationsList.scheduleLayoutAnimation()
             }
@@ -403,13 +568,8 @@ class MainActivity : SimpleActivity() {
         conversations: ArrayList<Conversation>,
         cached: Boolean = false,
     ) {
-        val sortedConversations = conversations
-            .sortedWith(
-                compareByDescending<Conversation> {
-                    config.pinnedConversations.contains(it.threadId.toString())
-                }.thenByDescending { it.date }
-            ).toMutableList() as ArrayList<Conversation>
-
+        latestConversations = ArrayList(conversations)
+        hasLoadedConversations = true
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the
             // loading placeholder and progress until we are done loading from telephony
@@ -419,15 +579,206 @@ class MainActivity : SimpleActivity() {
             showOrHidePlaceholder(conversations.isEmpty())
         }
 
-        try {
-            getOrCreateConversationsAdapter().apply {
-                updateConversations(sortedConversations) {
-                    if (!cached) {
-                        showOrHidePlaceholder(currentList.isEmpty())
+        showFilteredConversations(updatePlaceholder = !cached)
+        updateRecentOtpCard()
+    }
+
+
+    private fun showSpamFolder() {
+        isSpamFolder = true
+        binding.inboxCategoryScroll.beGone()
+        binding.recentOtpCard.beGone()
+        binding.mainMenu.requireToolbar().title = getString(R.string.show_spam)
+        binding.mainMenu.requireToolbar().menu
+            .findItem(R.id.show_spam).title = getString(R.string.messages_title)
+        updateBottomNavigationStyles()
+        showFilteredConversations()
+    }
+
+    private fun showInboxFolder() {
+        isSpamFolder = false
+        binding.inboxCategoryScroll.beVisible()
+        binding.mainMenu.requireToolbar().title = getString(R.string.messages_title)
+        binding.mainMenu.requireToolbar().menu
+            .findItem(R.id.show_spam).title = getString(R.string.show_spam)
+        updateRecentOtpCard()
+        updateBottomNavigationStyles()
+        showFilteredConversations()
+    }
+
+    @Suppress("MagicNumber")
+    private fun updateInboxCategoryStyles() {
+        val primaryColor = getProperPrimaryColor()
+        val textColor = getProperTextColor()
+        val backgroundColor = getProperBackgroundColor()
+        val density = resources.displayMetrics.density
+        val cornerRadius = 18f * density
+        for (index in 0 until binding.inboxCategoryGroup.childCount) {
+            val button = binding.inboxCategoryGroup.getChildAt(index) as? android.widget.RadioButton ?: continue
+            val selected = button.isChecked
+            button.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setCornerRadius(cornerRadius)
+                setColor(if (selected) primaryColor else backgroundColor)
+                val strokeColor = if (selected) primaryColor else primaryColor.adjustAlpha(LOWER_ALPHA)
+                setStroke(density.toInt().coerceAtLeast(1), strokeColor)
+            }
+            button.setTextColor(if (selected) primaryColor.getContrastColor() else textColor)
+            button.alpha = if (selected) 1f else 0.88f
+        }
+    }
+
+    private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
+        if (isSpamFolder) {
+            ensureBackgroundThread {
+                val spam = conversationsDB.getSpamWithLatestSnippet().map { it.toConversation() }
+                runOnUiThread {
+                    getOrCreateConversationsAdapter().updateConversations(ArrayList(spam)) {
+                        if (updatePlaceholder) showOrHidePlaceholder(spam.isEmpty())
                     }
+                    if (updatePlaceholder) showOrHidePlaceholder(spam.isEmpty())
                 }
             }
-        } catch (_: Exception) {
+            return
+        }
+        lastRenderedManualCategoryState = latestConversations.map {
+            it.threadId to config.getCategoryForThread(it.threadId)?.name
+        }
+        inboxPageGeneration++
+        inboxPageOffset = 0
+        inboxHasMorePages = true
+        displayedInboxConversations.clear()
+        loadInboxPage(reset = true, generation = inboxPageGeneration, updatePlaceholder = updatePlaceholder)
+    }
+
+    private fun loadInboxPage(
+        reset: Boolean,
+        generation: Int = inboxPageGeneration,
+        updatePlaceholder: Boolean = true
+    ) {
+        if (inboxPageLoading || (!reset && !inboxHasMorePages)) return
+        inboxPageLoading = true
+        val category = (selectedCategory ?: SmsClassifier.Category.TRANSACTIONS).name
+        val offset = if (reset) 0 else inboxPageOffset
+        val pinnedIds = config.pinnedConversations.mapNotNull { it.toLongOrNull() }
+        ensureBackgroundThread {
+            val page = conversationsDB.getInboxPage(category, pinnedIds, inboxPageSize, offset)
+                .map { it.toConversation() }
+            runOnUiThread {
+                inboxPageLoading = false
+                val requestIsStale = generation != inboxPageGeneration
+                if (requestIsStale) {
+                    loadInboxPage(reset = true, generation = inboxPageGeneration, updatePlaceholder = updatePlaceholder)
+                    return@runOnUiThread
+                }
+                if (reset) displayedInboxConversations.clear()
+                displayedInboxConversations.addAll(page)
+                inboxPageOffset = offset + page.size
+                inboxHasMorePages = page.size == inboxPageSize
+                getOrCreateConversationsAdapter().updateConversations(ArrayList(displayedInboxConversations)) {
+                    if (updatePlaceholder) showOrHidePlaceholder(displayedInboxConversations.isEmpty())
+                }
+                if (updatePlaceholder) showOrHidePlaceholder(displayedInboxConversations.isEmpty())
+            }
+        }
+    }
+
+    private fun loadNextInboxPage() {
+        if (!inboxPageLoading && inboxHasMorePages) {
+            loadInboxPage(reset = false)
+        }
+    }
+
+    /** Schedule persistent background initialization; WorkManager resumes after process death. */
+    private fun classifyUnclassifiedThreads(conversations: List<Conversation>) {
+        val hasPendingClassification = conversations.any { conversation ->
+            val needsCategory = conversation.inboxCategory == null
+            val needsVersionUpdate = !conversation.classificationManual &&
+                conversation.classifierVersion < SmsClassifier.CLASSIFIER_VERSION
+            !conversation.isScheduled && (needsCategory || needsVersionUpdate)
+        }
+        if (!hasPendingClassification) return
+        val request = OneTimeWorkRequestBuilder<InboxClassificationWorker>()
+            .setBackoffCriteria(
+                androidx.work.BackoffPolicy.LINEAR,
+                CLASSIFICATION_BACKOFF_SECONDS,
+                java.util.concurrent.TimeUnit.SECONDS
+            )
+            .build()
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+            InboxClassificationWorker.UNIQUE_WORK_NAME,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            request
+        )
+    }
+
+    @Suppress("MagicNumber")
+    private fun updateRecentOtpCard() {
+        val card = binding.root.findViewById<android.view.View>(R.id.recent_otp_card) ?: return
+        val codeView = binding.root.findViewById<android.widget.TextView>(R.id.recent_otp_code)
+        val senderView = binding.root.findViewById<android.widget.TextView>(R.id.recent_otp_sender_time)
+        val code = config.recentOtp
+        val visible = code.isNotBlank() && !config.isRecentOtpDismissed &&
+            selectedCategory == SmsClassifier.Category.TRANSACTIONS
+        card.visibility = if (visible) android.view.View.VISIBLE else android.view.View.GONE
+        if (!visible) return
+        val primary = getProperPrimaryColor()
+        val surface = getProperBackgroundColor()
+        val mix = 0.10f
+        val cardColor = Color.rgb(
+            (Color.red(surface) * (1f - mix) + Color.red(primary) * mix).toInt(),
+            (Color.green(surface) * (1f - mix) + Color.green(primary) * mix).toInt(),
+            (Color.blue(surface) * (1f - mix) + Color.blue(primary) * mix).toInt()
+        )
+        card.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 20f * resources.displayMetrics.density
+            setColor(cardColor)
+            setStroke((resources.displayMetrics.density).toInt().coerceAtLeast(1), primary.adjustAlpha(0.45f))
+        }
+        codeView.setTextColor(getProperTextColor())
+        senderView.setTextColor(getProperTextColor().adjustAlpha(0.78f))
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_copy).apply {
+            setOnClickListener {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("OTP", code))
+                toast(R.string.copy_otp)
+            }
+            (this as? android.widget.TextView)?.setTextColor(primary)
+        }
+        val dismissView = binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss)
+            as? android.widget.TextView
+        val deleteView = binding.root.findViewById<android.view.View>(R.id.recent_otp_delete)
+            as? android.widget.TextView
+        dismissView?.setTextColor(getProperTextColor())
+        deleteView?.setTextColor(getProperTextColor())
+        codeView.text = code
+        val elapsed = ((System.currentTimeMillis() - config.recentOtpTime).coerceAtLeast(0L) / 60000L)
+        val relative = when {
+            elapsed == 0L -> "Just now"
+            elapsed == 1L -> "1 min ago"
+            elapsed < 60L -> "$elapsed mins ago"
+            elapsed < 1440L -> "${elapsed / 60} hr ago"
+            else -> "${elapsed / 1440} days ago"
+        }
+        senderView.text = "${config.recentOtpSender} · $relative"
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_dismiss).setOnClickListener {
+            config.isRecentOtpDismissed = true
+            updateRecentOtpCard()
+        }
+        binding.root.findViewById<android.view.View>(R.id.recent_otp_delete).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setMessage(R.string.delete_otp_confirmation)
+                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .setPositiveButton(org.fossify.commons.R.string.delete) { _, _ ->
+                    sendBroadcast(Intent(this, DeleteSmsReceiver::class.java).apply {
+                        putExtra(THREAD_ID, config.recentOtpThreadId)
+                        putExtra(MESSAGE_ID, config.recentOtpMessageId)
+                        putExtra(IS_MMS, false)
+                    })
+                    config.isRecentOtpDismissed = true
+                    updateRecentOtpCard()
+                }.show()
         }
     }
 
@@ -445,8 +796,17 @@ class MainActivity : SimpleActivity() {
     private fun showOrHidePlaceholder(show: Boolean) {
         binding.conversationsFastscroller.beGoneIf(show)
         binding.noConversationsPlaceholder.beVisibleIf(show)
-        binding.noConversationsPlaceholder.text = getString(R.string.no_conversations_found)
-        binding.noConversationsPlaceholder2.beVisibleIf(show)
+        binding.noConversationsPlaceholder.text = getString(
+            if (latestConversations.isNotEmpty()) {
+                R.string.no_conversations_in_category
+            } else {
+                R.string.no_conversations_found
+            }
+        )
+        // A category can be empty while the rest of the inbox is populated or
+        // still being classified. Never invite the user to start a conversation
+        // just because the selected category has no matches.
+        binding.noConversationsPlaceholder2.beVisibleIf(show && latestConversations.isEmpty())
     }
 
     private fun fadeOutSearch() {

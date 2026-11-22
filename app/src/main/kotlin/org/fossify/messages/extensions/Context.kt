@@ -787,6 +787,20 @@ fun Context.getSuggestedContacts(
     return contacts
 }
 
+fun Context.isSavedContactNumber(number: String): Boolean {
+    if (number.isBlank() || !hasPermission(PERMISSION_READ_CONTACTS)) {
+        return false
+    }
+
+    val uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
+    return try {
+        contentResolver.query(uri, arrayOf(PhoneLookup._ID), null, null, null)
+            ?.use { it.moveToFirst() } ?: false
+    } catch (_: SecurityException) {
+        false
+    }
+}
+
 fun Context.getNameAndPhotoFromPhoneNumber(number: String): NamePhoto {
     MessagingCache.namePhoto.get(number)?.let { return it }
     if (!hasPermission(PERMISSION_READ_CONTACTS)) {
@@ -1258,10 +1272,15 @@ fun Context.insertOrUpdateConversation(
     cachedConv: Conversation? = conversationsDB.getConversationWithThreadId(conversation.threadId),
 ) {
     var updatedConv = conversation
-    if (cachedConv != null && cachedConv.usesCustomTitle) {
+    if (cachedConv != null) {
         updatedConv = updatedConv.copy(
-            title = cachedConv.title,
-            usesCustomTitle = true
+            title = if (cachedConv.usesCustomTitle) cachedConv.title else updatedConv.title,
+            usesCustomTitle = cachedConv.usesCustomTitle,
+            inboxCategory = cachedConv.inboxCategory,
+            classificationManual = cachedConv.classificationManual,
+            classifierVersion = cachedConv.classifierVersion,
+            classificationConfidence = cachedConv.classificationConfidence,
+            isSpam = cachedConv.isSpam
         )
     }
     conversationsDB.insertOrUpdate(updatedConv)
