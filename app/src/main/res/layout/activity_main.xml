@@ -51,66 +51,91 @@
                     android:id="@+id/category_personal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:button="@null"
                     android:gravity="center"
-                    android:padding="12dp"
-                    android:layout_marginEnd="6dp"
+                    android:includeFontPadding="false"
+                    android:minHeight="42dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="11dp"
+                    android:singleLine="true"
                     android:text="@string/category_personal"
-                    android:textSize="@dimen/normal_text_size"
-                    android:singleLine="true" />
+                    android:textAllCaps="false"
+                    android:textSize="@dimen/normal_text_size" />
 
 <RadioButton
                     android:id="@+id/category_transactions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:button="@null"
                     android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:minHeight="42dp"
                     android:paddingStart="16dp"
                     android:paddingTop="11dp"
                     android:paddingEnd="16dp"
-                    android:paddingBottom="10dp"
-                    android:minHeight="42dp"
-                    android:includeFontPadding="false"
-                    android:textAllCaps="false"
+                    android:paddingBottom="11dp"
+                    android:singleLine="true"
                     android:text="@string/category_transactions"
-                    android:textSize="@dimen/normal_text_size"
-                    android:checked="true" />
+                    android:textAllCaps="false"
+                    android:textSize="@dimen/normal_text_size"\n                    android:checked="true" />
 
 <RadioButton
                     android:id="@+id/category_services"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:button="@null"
                     android:gravity="center"
-                    android:padding="12dp"
-                    android:layout_marginEnd="6dp"
+                    android:includeFontPadding="false"
+                    android:minHeight="42dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="11dp"
+                    android:singleLine="true"
                     android:text="@string/category_services"
-                    android:textSize="@dimen/normal_text_size"
-                    android:singleLine="true" />
+                    android:textAllCaps="false"
+                    android:textSize="@dimen/normal_text_size" />
 
 <RadioButton
                     android:id="@+id/category_promotions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:button="@null"
                     android:gravity="center"
-                    android:padding="12dp"
-                    android:layout_marginEnd="6dp"
+                    android:includeFontPadding="false"
+                    android:minHeight="42dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="11dp"
+                    android:singleLine="true"
                     android:text="@string/category_promotions"
-                    android:textSize="@dimen/normal_text_size"
-                    android:singleLine="true" />
+                    android:textAllCaps="false"
+                    android:textSize="@dimen/normal_text_size" />
 
 <RadioButton
                     android:id="@+id/category_uncategorised"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:button="@null"
                     android:gravity="center"
-                    android:padding="12dp"
-                    android:layout_marginEnd="6dp"
+                    android:includeFontPadding="false"
+                    android:minHeight="42dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="11dp"
+                    android:singleLine="true"
                     android:text="@string/category_uncategorised"
-                    android:textSize="@dimen/normal_text_size"
-                    android:singleLine="true" />
+                    android:textAllCaps="false"
+                    android:textSize="@dimen/normal_text_size" />
             </RadioGroup>
         </HorizontalScrollView>
 
