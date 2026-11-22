@@ -14,47 +14,56 @@
         android:paddingEnd="@dimen/activity_margin"
         android:paddingBottom="@dimen/medium_margin">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/top_toolbar"
+        <!-- Keep the container ID expected by Fossify Commons ViewBinding. -->
+        <RelativeLayout
+            android:id="@+id/toolbar_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:contentInsetStartWithNavigation="0dp"
-            app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
-
-        <EditText
-            android:id="@+id/top_toolbar_search"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="104dp"
-            android:alpha="0"
-            android:background="@null"
-            android:ellipsize="end"
-            android:focusable="true"
             android:focusableInTouchMode="true"
-            android:gravity="start|center_vertical"
-            android:hint="@string/search"
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:lines="1"
-            android:maxLines="1"
-            android:paddingStart="8dp"
-            android:paddingEnd="0dp"
-            android:singleLine="true"
-            android:textSize="@dimen/big_text_size" />
+            tools:ignore="UselessParent">
 
-        <ImageView
-            android:id="@+id/top_toolbar_search_icon"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="48dp"
-            android:contentDescription="@string/search"
-            android:padding="12dp"
-            android:src="@drawable/ic_search_vector"
-            tools:ignore="ContentDescription" />
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/top_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:contentInsetStartWithNavigation="0dp"
+                app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
 
+            <EditText
+                android:id="@+id/top_toolbar_search"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="104dp"
+                android:alpha="0"
+                android:background="@null"
+                android:ellipsize="end"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="start|center_vertical"
+                android:hint="@string/search"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:lines="1"
+                android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="0dp"
+                android:singleLine="true"
+                android:textSize="@dimen/big_text_size" />
+
+            <ImageView
+                android:id="@+id/top_toolbar_search_icon"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="48dp"
+                android:contentDescription="@string/search"
+                android:padding="12dp"
+                android:src="@drawable/ic_search_vector"
+                tools:ignore="ContentDescription" />
+
+        </RelativeLayout>
     </FrameLayout>
 </merge>
