@@ -20,6 +20,11 @@ import org.fossify.messages.extensions.getThreadId
 import org.fossify.messages.extensions.insertNewSMS
 import org.fossify.messages.extensions.insertOrUpdateConversation
 import org.fossify.messages.extensions.messagesDB
+import org.fossify.messages.extensions.conversationsDB
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import org.fossify.messages.workers.InboxClassificationWorker
 import org.fossify.messages.extensions.shouldUnarchive
 import org.fossify.messages.extensions.showReceivedMessageNotification
 import org.fossify.messages.extensions.updateConversationArchivedStatus
@@ -138,6 +143,13 @@ class SmsReceiver : BroadcastReceiver() {
         )
 
         context.messagesDB.insertOrUpdate(message)
+        // Only this thread needs fresh classification; preserve explicit manual choices.
+        context.conversationsDB.markThreadForReclassification(threadId)
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            InboxClassificationWorker.UNIQUE_WORK_NAME,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            OneTimeWorkRequestBuilder<InboxClassificationWorker>().build()
+        )
         OtpUtils.extractOtp(body)?.let { context.config.saveRecentOtp(it, senderName.ifBlank { address }, newMessageId, threadId) }
 
         if (context.shouldUnarchive()) {

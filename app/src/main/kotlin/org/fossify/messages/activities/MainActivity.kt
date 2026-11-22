@@ -109,7 +109,7 @@ class MainActivity : SimpleActivity() {
     private var inboxCategoryControlsInitialized = false
     private var inboxInitializationObserverAttached = false
     @Volatile private var isClassifyingThreads = false
-    private val inboxPageSize = 50
+    private val inboxPageSize = 100
     private var inboxPageOffset = 0
     private var inboxHasMorePages = true
     private var inboxPageLoading = false
@@ -162,7 +162,7 @@ class MainActivity : SimpleActivity() {
             conversation.threadId to config.getCategoryForThread(conversation.threadId)?.name
         }
         if (currentManualCategoryState != lastRenderedManualCategoryState) {
-            showFilteredConversations()
+            getCachedConversations()
         }
         if (!config.inboxInitializationComplete && latestConversations.any { it.inboxCategory == null }) {
             classifyUnclassifiedThreads(latestConversations)
@@ -563,7 +563,7 @@ class MainActivity : SimpleActivity() {
 
     private fun showFilteredConversations(updatePlaceholder: Boolean = true) {
         lastRenderedManualCategoryState = latestConversations.map {
-            it.threadId to it.inboxCategory
+            it.threadId to config.getCategoryForThread(it.threadId)?.name
         }
         inboxPageGeneration++
         inboxPageOffset = 0
@@ -625,7 +625,7 @@ class MainActivity : SimpleActivity() {
             .build()
         WorkManager.getInstance(applicationContext).enqueueUniqueWork(
             InboxClassificationWorker.UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
             request
         )
     }

@@ -182,7 +182,7 @@ class InboxClassificationWorker(
         const val KEY_TOTAL = "total_threads"
         private const val INITIALIZATION_CHANNEL = "tidysms_inbox_initialization"
         private const val INITIALIZATION_NOTIFICATION_ID = 72041
-        private const val MAX_THREADS_PER_RUN = 100
+        private const val MAX_THREADS_PER_RUN = 500
         private const val RECENT_MESSAGES_PER_THREAD = 7
         private const val PROGRESS_UPDATE_INTERVAL = 10
     }

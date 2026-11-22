@@ -27,6 +27,7 @@ import org.fossify.messages.adapters.ContactsAdapter
 import org.fossify.messages.databinding.ActivityConversationDetailsBinding
 import org.fossify.messages.dialogs.RenameConversationDialog
 import org.fossify.messages.extensions.config
+import org.fossify.messages.helpers.SmsClassifier
 import org.fossify.messages.extensions.conversationsDB
 import org.fossify.messages.extensions.getContactFromAddress
 import org.fossify.messages.extensions.getThreadParticipants
@@ -213,8 +214,21 @@ class ConversationDetailsActivity : SimpleActivity() {
             AlertDialog.Builder(this)
                 .setTitle(R.string.sender_category)
                 .setItems(categories) { _, which ->
-                    config.setManualCategoryForThread(id, values[which])
-                    refreshCategoryLabel()
+                    val chosenCategory = values[which]
+                    ensureBackgroundThread {
+                        val current = conversationsDB.getConversationWithThreadId(id)
+                        if (current != null) {
+                            conversationsDB.updateInboxClassification(
+                                id,
+                                chosenCategory?.name,
+                                chosenCategory != null,
+                                if (chosenCategory == null) 0 else SmsClassifier.CLASSIFIER_VERSION,
+                                if (chosenCategory == null) 0f else 1f
+                            )
+                        }
+                        config.setManualCategoryForThread(id, chosenCategory)
+                        runOnUiThread { refreshCategoryLabel() }
+                    }
                 }
                 .show()
         }

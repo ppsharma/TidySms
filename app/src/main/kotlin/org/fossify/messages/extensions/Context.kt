@@ -1272,10 +1272,14 @@ fun Context.insertOrUpdateConversation(
     cachedConv: Conversation? = conversationsDB.getConversationWithThreadId(conversation.threadId),
 ) {
     var updatedConv = conversation
-    if (cachedConv != null && cachedConv.usesCustomTitle) {
+    if (cachedConv != null) {
         updatedConv = updatedConv.copy(
-            title = cachedConv.title,
-            usesCustomTitle = true
+            title = if (cachedConv.usesCustomTitle) cachedConv.title else updatedConv.title,
+            usesCustomTitle = cachedConv.usesCustomTitle,
+            inboxCategory = cachedConv.inboxCategory,
+            classificationManual = cachedConv.classificationManual,
+            classifierVersion = cachedConv.classifierVersion,
+            classificationConfidence = cachedConv.classificationConfidence
         )
     }
     conversationsDB.insertOrUpdate(updatedConv)
