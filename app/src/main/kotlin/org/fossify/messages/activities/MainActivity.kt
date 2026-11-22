@@ -202,7 +202,12 @@ class MainActivity : SimpleActivity() {
         binding.mainMenu.requireToolbar().inflateMenu(R.menu.menu_main)
         binding.mainMenu.toggleHideOnScroll(true)
         binding.mainMenu.setupMenu()
-        binding.mainMenu.requireToolbar().title = getString(R.string.messages_title)
+
+        // MySearchMenu places the search field and toolbar title side by side.
+        // Reserve enough width for the title and overflow menu on narrow screens.
+        val toolbar = binding.mainMenu.requireToolbar()
+        toolbar.minimumWidth = (resources.displayMetrics.widthPixels * 0.46f).toInt()
+        toolbar.title = getString(R.string.messages_title)
 
         binding.mainMenu.onSearchClosedListener = {
             fadeOutSearch()
