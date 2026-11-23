@@ -568,7 +568,8 @@ class MainActivity : SimpleActivity() {
         conversations: ArrayList<Conversation>,
         cached: Boolean = false,
     ) {
-        latestConversations = ArrayList(conversations)
+        // Thread ID is the stable provider identity; never collapse separate senders by phone number.
+        latestConversations = ArrayList(conversations.distinctBy { it.threadId })
         hasLoadedConversations = true
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the

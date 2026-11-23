@@ -870,6 +870,13 @@ class ThreadActivity : SimpleActivity() {
             if (granted) {
                 setupButtons()
                 setupCachedMessages {
+                    if (conversation == null && messages.isEmpty() &&
+                        !intent.hasExtra(THREAD_NUMBER) && !isRecycleBin
+                    ) {
+                        toast(org.fossify.commons.R.string.unknown_error_occurred)
+                        finish()
+                        return@setupCachedMessages
+                    }
                     setupThread {
                         val searchedMessageId = intent.getLongExtra(SEARCHED_MESSAGE_ID, -1L)
                         intent.removeExtra(SEARCHED_MESSAGE_ID)
