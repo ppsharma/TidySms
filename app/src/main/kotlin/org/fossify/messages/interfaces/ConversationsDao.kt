@@ -82,7 +82,7 @@ interface ConversationsDao {
     @Query("SELECT EXISTS(SELECT 1 FROM spam_sender_rules WHERE address = :address)")
     fun isSpamSender(address: String): Boolean
 
-    @Query("UPDATE conversations SET is_spam = 1 WHERE phone_number = :address AND is_group_conversation = 0")
+    @Query("UPDATE conversations SET is_spam = 1, archived = 0 WHERE phone_number = :address AND is_group_conversation = 0")
     fun markConversationsFromSenderSpam(address: String)
 
     @Query("UPDATE conversations SET is_spam = 0 WHERE phone_number = :address AND is_group_conversation = 0")

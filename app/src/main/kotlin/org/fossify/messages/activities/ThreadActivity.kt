@@ -374,6 +374,10 @@ class ThreadActivity : SimpleActivity() {
             findItem(R.id.mark_as_unread).isVisible = threadItems.isNotEmpty() && !isRecycleBin
             findItem(R.id.spam_sender).isVisible =
                 conversation != null && participants.size == 1 && !isRecycleBin
+            findItem(R.id.spam_sender).title = getString(
+                if (conversation?.isSpam == true) R.string.remove_from_spam
+                else R.string.mark_sender_spam
+            )
 
             // allow saving number in cases when we don't have it stored yet
             findItem(R.id.add_number_to_contact).isVisible =
