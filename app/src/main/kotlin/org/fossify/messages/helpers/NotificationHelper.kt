@@ -134,9 +134,14 @@ class NotificationHelper(private val context: Context) {
             )
             val otpNotification = NotificationCompat.Builder(context, notificationChannelId)
                 .setSmallIcon(R.drawable.ic_messenger)
-                .setContentTitle(context.getString(R.string.otp_notification_title))
+                .setContentTitle(sender?.takeIf { it.isNotBlank() } ?: address)
                 .setContentText(otpCode)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(otpCode))
+                .setLargeIcon(bitmap)
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .setSummaryText(context.getString(R.string.otp_notification_title))
+                        .bigText(otpCode)
+                )
                 .setContentIntent(contentPendingIntent)
                 .setColor(context.getProperPrimaryColor())
                 .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -147,6 +152,11 @@ class NotificationHelper(private val context: Context) {
                     org.fossify.commons.R.drawable.ic_copy_vector,
                     context.getString(R.string.copy_otp),
                     copyPendingIntent
+                )
+                .addAction(
+                    org.fossify.commons.R.drawable.ic_delete_vector,
+                    context.getString(R.string.delete_otp),
+                    deleteSmsPendingIntent
                 )
                 .build()
             notificationManager.notify(notificationId, otpNotification)
