@@ -23,7 +23,7 @@
     <string name="category_personal">Personal</string>
     <string name="category_uncategorised">Uncategorized</string>
     <string name="category_all">All</string>
-    <string name="app_launcher_name">TidySms</string>
+    <string name="app_launcher_name">TidySMS</string>
     <string name="share_crash_report">Share crash report</string>
     <string name="crash_report_subject">TidySMS crash report</string>
     <string name="no_crash_report">No crash report is available</string>
