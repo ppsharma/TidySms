@@ -20,6 +20,7 @@ import org.fossify.messages.models.Draft
 import org.fossify.messages.models.Message
 import org.fossify.messages.models.MessageAttachment
 import org.fossify.messages.models.RecycleBinMessage
+import org.fossify.messages.models.SpamSenderRule
 
 @Database(
     entities = [
@@ -28,9 +29,10 @@ import org.fossify.messages.models.RecycleBinMessage
         MessageAttachment::class,
         Message::class,
         RecycleBinMessage::class,
-        Draft::class
+        Draft::class,
+        SpamSenderRule::class
     ],
-    version = 13
+    version = 14
 )
 @TypeConverters(Converters::class)
 abstract class MessagesDatabase : RoomDatabase() {
@@ -57,7 +59,6 @@ abstract class MessagesDatabase : RoomDatabase() {
                             klass = MessagesDatabase::class.java,
                             name = "conversations.db"
                         )
-                            .fallbackToDestructiveMigration()
                             .addMigrations(MIGRATION_1_2)
                             .addMigrations(MIGRATION_2_3)
                             .addMigrations(MIGRATION_3_4)
@@ -70,6 +71,7 @@ abstract class MessagesDatabase : RoomDatabase() {
                             .addMigrations(MIGRATION_10_11)
                             .addMigrations(MIGRATION_11_12)
                             .addMigrations(MIGRATION_12_13)
+                            .addMigrations(MIGRATION_13_14)
                             .build()
                     }
                 }
@@ -189,6 +191,19 @@ abstract class MessagesDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_conversations_is_spam_archived_date " +
                         "ON conversations (is_spam, archived, date)"
+                )
+            }
+        }
+
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `spam_sender_rules` (`address` TEXT NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`address`))"
+                )
+                db.execSQL(
+                    "INSERT OR IGNORE INTO `spam_sender_rules` (`address`, `created_at`) " +
+                        "SELECT `phone_number`, CAST(strftime('%s','now') AS INTEGER) * 1000 " +
+                        "FROM `conversations` WHERE `is_spam` = 1 AND `is_group_conversation` = 0 AND `phone_number` != ''"
                 )
             }
         }

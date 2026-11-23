@@ -127,9 +127,11 @@ import org.fossify.messages.extensions.filterNotInByKey
 import org.fossify.messages.extensions.getAddresses
 import org.fossify.messages.extensions.getDefaultKeyboardHeight
 import org.fossify.messages.extensions.getFileSizeFromUri
+import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getMessages
 import org.fossify.messages.extensions.getSmsDraft
 import org.fossify.messages.extensions.getThreadId
+import org.fossify.messages.extensions.insertOrUpdateConversation
 import org.fossify.messages.extensions.getThreadParticipants
 import org.fossify.messages.extensions.getThreadTitle
 import org.fossify.messages.extensions.indexOfFirstOrNull
@@ -191,6 +193,7 @@ import org.fossify.messages.models.Events
 import org.fossify.messages.models.Message
 import org.fossify.messages.models.MessageAttachment
 import org.fossify.messages.models.SIMCard
+import org.fossify.messages.models.SpamSenderRule
 import org.fossify.messages.models.ThreadItem
 import org.fossify.messages.models.ThreadItem.ThreadDateTime
 import org.fossify.messages.models.ThreadItem.ThreadError
@@ -371,6 +374,12 @@ class ThreadActivity : SimpleActivity() {
                 participants.size == 1 && !isSpecialNumber() && !isRecycleBin
             findItem(R.id.manage_people).isVisible = !isSpecialNumber() && !isRecycleBin
             findItem(R.id.mark_as_unread).isVisible = threadItems.isNotEmpty() && !isRecycleBin
+            findItem(R.id.spam_sender).isVisible =
+                conversation != null && participants.size == 1 && !isRecycleBin
+            findItem(R.id.spam_sender).title = getString(
+                if (conversation?.isSpam == true) R.string.remove_from_spam
+                else R.string.mark_sender_spam
+            )
 
             // allow saving number in cases when we don't have it stored yet
             findItem(R.id.add_number_to_contact).isVisible =
@@ -401,10 +410,39 @@ class ThreadActivity : SimpleActivity() {
             R.id.dial_number -> dialNumber()
             R.id.manage_people -> managePeople()
             R.id.mark_as_unread -> markAsUnread()
+            R.id.spam_sender -> toggleSpamSenderRule()
             else -> return false
         }
 
         return true
+    }
+
+    private fun toggleSpamSenderRule() {
+        val address = conversation?.phoneNumber?.takeIf { it.isNotBlank() } ?: return
+        ensureBackgroundThread {
+            val dao = conversationsDB
+            val currentlySpam = dao.isSpamSender(address)
+            val question = getString(
+                if (currentlySpam) R.string.remove_sender_spam_confirmation
+                else R.string.mark_sender_spam_confirmation
+            )
+            runOnUiThread {
+                ConfirmationDialog(this, question) {
+                    ensureBackgroundThread {
+                        if (currentlySpam) {
+                            dao.removeSpamSenderRule(address)
+                            dao.unmarkConversationsFromSenderSpam(address)
+                        } else {
+                            dao.addSpamSenderRule(SpamSenderRule(address))
+                            dao.markConversationsFromSenderSpam(address)
+                        }
+                        conversation = dao.getConversationWithThreadId(threadId)
+                        refreshConversations()
+                        runOnUiThread { refreshMenuItems() }
+                    }
+                }
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
@@ -432,6 +470,15 @@ class ThreadActivity : SimpleActivity() {
 
     private fun setupCachedMessages(callback: () -> Unit) {
         ensureBackgroundThread {
+            // Load conversation and messages in one background task to avoid a title race.
+            conversation = try {
+                conversationsDB.getConversationWithThreadId(threadId)
+                    ?: getConversations(threadId).firstOrNull()?.also {
+                        insertOrUpdateConversation(it)
+                    }
+            } catch (_: Exception) {
+                null
+            }
             messages = try {
                 if (isRecycleBin) {
                     messagesDB.getThreadMessagesFromRecycleBin(threadId)
@@ -831,8 +878,14 @@ class ThreadActivity : SimpleActivity() {
         handlePermission(PERMISSION_READ_PHONE_STATE) { granted ->
             if (granted) {
                 setupButtons()
-                setupConversation()
                 setupCachedMessages {
+                    if (conversation == null && messages.isEmpty() &&
+                        !intent.hasExtra(THREAD_NUMBER) && !isRecycleBin
+                    ) {
+                        toast(org.fossify.commons.R.string.unknown_error_occurred)
+                        finish()
+                        return@setupCachedMessages
+                    }
                     setupThread {
                         val searchedMessageId = intent.getLongExtra(SEARCHED_MESSAGE_ID, -1L)
                         intent.removeExtra(SEARCHED_MESSAGE_ID)
@@ -845,12 +898,6 @@ class ThreadActivity : SimpleActivity() {
             } else {
                 finish()
             }
-        }
-    }
-
-    private fun setupConversation() {
-        ensureBackgroundThread {
-            conversation = conversationsDB.getConversationWithThreadId(threadId)
         }
     }
 

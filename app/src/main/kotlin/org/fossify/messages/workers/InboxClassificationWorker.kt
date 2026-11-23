@@ -28,14 +28,7 @@ class InboxClassificationWorker(
     override fun doWork(): Result {
         val config = applicationContext.config
 
-        // A completed pass followed by a newly requested pass is a new progress
-        // session. An interrupted/retried pass must retain its durable progress.
-        if (config.inboxInitializationComplete) {
-            config.inboxInitializationProcessed = 0
-            config.inboxInitializationTotal = 0
-        }
-        config.inboxInitializationComplete = false
-
+        val wasAlreadyComplete = config.inboxInitializationComplete
         val database = applicationContext.conversationsDB
         val conversations = database.getNonArchived().filter { !it.isScheduled }
         val total = conversations.size
@@ -61,6 +54,17 @@ class InboxClassificationWorker(
             !it.classificationManual &&
                 (it.inboxCategory == null || it.classifierVersion < SmsClassifier.CLASSIFIER_VERSION)
         }
+        // A queued APPEND_OR_REPLACE no-op must not reset progress or post Inbox Ready twice.
+        if (wasAlreadyComplete && pending.isEmpty()) {
+            return Result.success()
+        }
+
+        if (wasAlreadyComplete) {
+            config.inboxInitializationProcessed = 0
+            config.inboxInitializationTotal = 0
+        }
+        config.inboxInitializationComplete = false
+
         val batch = pending.take(MAX_THREADS_PER_RUN)
 
         // Room is the source of truth. Retain a high-water mark so a transiently

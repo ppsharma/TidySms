@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import org.fossify.messages.models.Conversation
 import org.fossify.messages.models.ConversationWithSnippetOverride
+import org.fossify.messages.models.SpamSenderRule
 
 @Dao
 interface ConversationsDao {
@@ -15,7 +16,7 @@ interface ConversationsDao {
     @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
         "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
         "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
-        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0")
+        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 AND phone_number NOT IN (SELECT address FROM spam_sender_rules)")
     fun getNonArchivedWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     fun getNonArchived(): List<Conversation> =
@@ -25,6 +26,7 @@ interface ConversationsDao {
         "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
         "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
         "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 " +
+        "AND phone_number NOT IN (SELECT address FROM spam_sender_rules) " +
         "AND is_scheduled = 0 AND (inbox_category = :category OR " +
         "(inbox_category IS NULL AND :category = 'UNCATEGORISED')) " +
         "ORDER BY CASE WHEN thread_id IN (:pinnedThreadIds) THEN 0 ELSE 1 END, " +
@@ -40,6 +42,7 @@ interface ConversationsDao {
     ): List<ConversationWithSnippetOverride>
 
     @Query("SELECT COUNT(*) FROM conversations WHERE archived = 0 AND is_spam = 0 " +
+        "AND phone_number NOT IN (SELECT address FROM spam_sender_rules) " +
         "AND is_scheduled = 0 AND (inbox_category = :category OR " +
         "(inbox_category IS NULL AND :category = 'UNCATEGORISED'))")
     fun getInboxCategoryCount(category: String): Int
@@ -64,12 +67,27 @@ interface ConversationsDao {
             "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
             "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC " +
             "LIMIT 1) as new_snippet, * FROM conversations " +
-            "WHERE is_spam = 1 AND archived = 0 ORDER BY date DESC"
+            "WHERE (is_spam = 1 OR phone_number IN (SELECT address FROM spam_sender_rules)) AND archived = 0 ORDER BY date DESC"
     )
     fun getSpamWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     @Query("UPDATE conversations SET is_spam = :isSpam WHERE thread_id = :threadId")
     fun setSpam(threadId: Long, isSpam: Boolean)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun addSpamSenderRule(rule: SpamSenderRule): Long
+
+    @Query("DELETE FROM spam_sender_rules WHERE address = :address")
+    fun removeSpamSenderRule(address: String)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM spam_sender_rules WHERE address = :address)")
+    fun isSpamSender(address: String): Boolean
+
+    @Query("UPDATE conversations SET is_spam = 1, archived = 0 WHERE phone_number = :address AND is_group_conversation = 0")
+    fun markConversationsFromSenderSpam(address: String)
+
+    @Query("UPDATE conversations SET is_spam = 0 WHERE phone_number = :address AND is_group_conversation = 0")
+    fun unmarkConversationsFromSenderSpam(address: String)
 
     @Query("SELECT * FROM conversations WHERE thread_id = :threadId")
     fun getConversationWithThreadId(threadId: Long): Conversation?

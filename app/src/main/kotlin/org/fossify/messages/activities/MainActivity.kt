@@ -490,8 +490,14 @@ class MainActivity : SimpleActivity() {
                     conversationsDB.deleteThreadId(threadId)
                 }
 
-                val newConversation =
-                    conversations.find { it.phoneNumber == cachedConversation.phoneNumber }
+                // A temporary thread may only be migrated when there is exactly one
+                // provider thread with the same sender shape. Never guess between
+                // multiple threads that happen to share the first phone number.
+                val matchingConversations = conversations.filter {
+                    it.phoneNumber == cachedConversation.phoneNumber &&
+                        it.isGroupConversation == cachedConversation.isGroupConversation
+                }
+                val newConversation = matchingConversations.singleOrNull()
                 if (isTemporaryThread && newConversation != null) {
                     // delete the original temporary thread and move any scheduled messages
                     // to the new thread
@@ -568,7 +574,8 @@ class MainActivity : SimpleActivity() {
         conversations: ArrayList<Conversation>,
         cached: Boolean = false,
     ) {
-        latestConversations = ArrayList(conversations)
+        // Thread ID is the stable provider identity; never collapse separate senders by phone number.
+        latestConversations = ArrayList(conversations.distinctBy { it.threadId })
         hasLoadedConversations = true
         if (cached && config.appRunCount == 1) {
             // there are no cached conversations on the first run so we show the

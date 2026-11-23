@@ -30,6 +30,8 @@ import org.fossify.messages.receivers.MarkAsReadReceiver
 import org.fossify.messages.helpers.OtpUtils
 import org.fossify.messages.helpers.OTP_CODE
 
+private const val OTP_NOTIFICATION_CHANNEL_ID = "tidysms_otp_alerts"
+
 class NotificationHelper(private val context: Context) {
 
     private val notificationManager = context.notificationManager
@@ -125,6 +127,9 @@ class NotificationHelper(private val context: Context) {
 
         val otpCode = OtpUtils.extractOtp(body)
         if (otpCode != null) {
+            // Dedicated high-importance channel for OTP heads-up alerts.
+            createChannel(OTP_NOTIFICATION_CHANNEL_ID, context.getString(R.string.otp_notification_title))
+            val otpSender = sender?.takeIf { it.isNotBlank() } ?: address
             val copyIntent = Intent(context, CopyOtpReceiver::class.java).putExtra(OTP_CODE, otpCode)
             val copyPendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -132,11 +137,16 @@ class NotificationHelper(private val context: Context) {
                 copyIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val otpNotification = NotificationCompat.Builder(context, notificationChannelId)
+            val otpNotification = NotificationCompat.Builder(context, OTP_NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_messenger)
-                .setContentTitle(context.getString(R.string.otp_notification_title))
-                .setContentText(otpCode)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(otpCode))
+                .setContentTitle(otpCode)
+                .setContentText("OTP from $otpSender")
+                .setLargeIcon(bitmap)
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .setSummaryText("OTP from $otpSender")
+                        .bigText(otpCode)
+                )
                 .setContentIntent(contentPendingIntent)
                 .setColor(context.getProperPrimaryColor())
                 .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -147,6 +157,11 @@ class NotificationHelper(private val context: Context) {
                     org.fossify.commons.R.drawable.ic_copy_vector,
                     context.getString(R.string.copy_otp),
                     copyPendingIntent
+                )
+                .addAction(
+                    org.fossify.commons.R.drawable.ic_delete_vector,
+                    context.getString(R.string.delete_otp),
+                    deleteSmsPendingIntent
                 )
                 .build()
             notificationManager.notify(notificationId, otpNotification)

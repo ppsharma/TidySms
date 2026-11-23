@@ -144,7 +144,18 @@ class SmsReceiver : BroadcastReceiver() {
 
         context.messagesDB.insertOrUpdate(message)
         val storedConversation = context.conversationsDB.getConversationWithThreadId(threadId)
-        if (storedConversation?.isSpam == true) return
+        val conversationsDao = context.conversationsDB
+        if (storedConversation?.isSpam == true && !conversationsDao.isSpamSender(address)) {
+            conversationsDao.addSpamSenderRule(
+                org.fossify.messages.models.SpamSenderRule(address)
+            )
+        }
+        if (conversationsDao.isSpamSender(address) || storedConversation?.isSpam == true) {
+            conversationsDao.markConversationsFromSenderSpam(address)
+            refreshMessages()
+            refreshConversations()
+            return
+        }
         // Routine incoming SMS must not restart the full inbox scan.
         if (storedConversation?.inboxCategory == null) {
             WorkManager.getInstance(context).enqueueUniqueWork(
