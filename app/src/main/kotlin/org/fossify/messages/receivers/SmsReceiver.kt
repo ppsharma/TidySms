@@ -152,6 +152,8 @@ class SmsReceiver : BroadcastReceiver() {
         }
         if (conversationsDao.isSpamSender(address) || storedConversation?.isSpam == true) {
             conversationsDao.markConversationsFromSenderSpam(address)
+            refreshMessages()
+            refreshConversations()
             return
         }
         // Routine incoming SMS must not restart the full inbox scan.

@@ -82,6 +82,20 @@ class MmsReceiver : MmsReceivedReceiver() {
             context.getNameFromAddress(address, it)
         }
 
+        val conversation = context.getConversations(mms.threadId).firstOrNull() ?: return
+        runCatching { context.insertOrUpdateConversation(conversation) }
+
+        val conversationsDao = context.conversationsDB
+        if (conversationsDao.isSpamSender(address) || conversation.isSpam) {
+            conversationsDao.addSpamSenderRule(
+                org.fossify.messages.models.SpamSenderRule(address)
+            )
+            conversationsDao.markConversationsFromSenderSpam(address)
+            refreshMessages()
+            refreshConversations()
+            return
+        }
+
         context.showReceivedMessageNotification(
             messageId = mms.id,
             isMms = true,
@@ -91,9 +105,6 @@ class MmsReceiver : MmsReceivedReceiver() {
             threadId = mms.threadId,
             bitmap = glideBitmap
         )
-
-        val conversation = context.getConversations(mms.threadId).firstOrNull() ?: return
-        runCatching { context.insertOrUpdateConversation(conversation) }
         if (context.shouldUnarchive()) {
             context.updateConversationArchivedStatus(mms.threadId, false)
         }
