@@ -464,6 +464,12 @@ class ThreadActivity : SimpleActivity() {
 
     private fun setupCachedMessages(callback: () -> Unit) {
         ensureBackgroundThread {
+            // Load conversation and messages in one background task to avoid a title race.
+            conversation = try {
+                conversationsDB.getConversationWithThreadId(threadId)
+            } catch (_: Exception) {
+                null
+            }
             messages = try {
                 if (isRecycleBin) {
                     messagesDB.getThreadMessagesFromRecycleBin(threadId)
@@ -863,7 +869,6 @@ class ThreadActivity : SimpleActivity() {
         handlePermission(PERMISSION_READ_PHONE_STATE) { granted ->
             if (granted) {
                 setupButtons()
-                setupConversation()
                 setupCachedMessages {
                     setupThread {
                         val searchedMessageId = intent.getLongExtra(SEARCHED_MESSAGE_ID, -1L)
@@ -877,12 +882,6 @@ class ThreadActivity : SimpleActivity() {
             } else {
                 finish()
             }
-        }
-    }
-
-    private fun setupConversation() {
-        ensureBackgroundThread {
-            conversation = conversationsDB.getConversationWithThreadId(threadId)
         }
     }
 

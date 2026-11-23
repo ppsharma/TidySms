@@ -4,7 +4,7 @@
     <string name="category_automatic">Automatic</string>
     <string name="category_manual">Manual</string>
     <string name="sender_category_value">%1$s · %2$s</string>
-    <string name="messages_title">Messages</string>
+    <string name="messages_title">TidySMS</string>
     <string name="recent_otp">Recent OTP</string>
     <string name="copy_otp">Copy OTP</string>
     <string name="otp_notification_title">Your OTP</string>
