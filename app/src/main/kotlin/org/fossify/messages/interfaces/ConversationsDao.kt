@@ -16,7 +16,7 @@ interface ConversationsDao {
     @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
         "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
         "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
-        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0")
+        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 AND phone_number NOT IN (SELECT address FROM spam_sender_rules)")
     fun getNonArchivedWithLatestSnippet(): List<ConversationWithSnippetOverride>
 
     fun getNonArchived(): List<Conversation> =
@@ -25,7 +25,8 @@ interface ConversationsDao {
     @Query("SELECT (SELECT body FROM messages LEFT OUTER JOIN recycle_bin_messages " +
         "ON messages.id = recycle_bin_messages.id WHERE recycle_bin_messages.id IS NULL " +
         "AND messages.thread_id = conversations.thread_id ORDER BY messages.date DESC LIMIT 1) " +
-        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 " +
+        "as new_snippet, * FROM conversations WHERE archived = 0 AND is_spam = 0 AND phone_number NOT IN (SELECT address FROM spam_sender_rules) " +
+        "AND phone_number NOT IN (SELECT address FROM spam_sender_rules) " +
         "AND is_scheduled = 0 AND (inbox_category = :category OR " +
         "(inbox_category IS NULL AND :category = 'UNCATEGORISED')) " +
         "ORDER BY CASE WHEN thread_id IN (:pinnedThreadIds) THEN 0 ELSE 1 END, " +
