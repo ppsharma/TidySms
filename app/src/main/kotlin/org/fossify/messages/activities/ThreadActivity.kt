@@ -191,6 +191,7 @@ import org.fossify.messages.models.Events
 import org.fossify.messages.models.Message
 import org.fossify.messages.models.MessageAttachment
 import org.fossify.messages.models.SIMCard
+import org.fossify.messages.models.SpamSenderRule
 import org.fossify.messages.models.ThreadItem
 import org.fossify.messages.models.ThreadItem.ThreadDateTime
 import org.fossify.messages.models.ThreadItem.ThreadError
@@ -371,6 +372,8 @@ class ThreadActivity : SimpleActivity() {
                 participants.size == 1 && !isSpecialNumber() && !isRecycleBin
             findItem(R.id.manage_people).isVisible = !isSpecialNumber() && !isRecycleBin
             findItem(R.id.mark_as_unread).isVisible = threadItems.isNotEmpty() && !isRecycleBin
+            findItem(R.id.spam_sender).isVisible =
+                conversation != null && participants.size == 1 && !isRecycleBin
 
             // allow saving number in cases when we don't have it stored yet
             findItem(R.id.add_number_to_contact).isVisible =
@@ -401,10 +404,39 @@ class ThreadActivity : SimpleActivity() {
             R.id.dial_number -> dialNumber()
             R.id.manage_people -> managePeople()
             R.id.mark_as_unread -> markAsUnread()
+            R.id.spam_sender -> toggleSpamSenderRule()
             else -> return false
         }
 
         return true
+    }
+
+    private fun toggleSpamSenderRule() {
+        val address = conversation?.phoneNumber?.takeIf { it.isNotBlank() } ?: return
+        ensureBackgroundThread {
+            val dao = conversationsDB
+            val currentlySpam = dao.isSpamSender(address)
+            val question = getString(
+                if (currentlySpam) R.string.remove_sender_spam_confirmation
+                else R.string.mark_sender_spam_confirmation
+            )
+            runOnUiThread {
+                ConfirmationDialog(this, question) {
+                    ensureBackgroundThread {
+                        if (currentlySpam) {
+                            dao.removeSpamSenderRule(address)
+                            dao.unmarkConversationsFromSenderSpam(address)
+                        } else {
+                            dao.addSpamSenderRule(SpamSenderRule(address))
+                            dao.markConversationsFromSenderSpam(address)
+                        }
+                        conversation = dao.getConversationWithThreadId(threadId)
+                        refreshConversations()
+                        runOnUiThread { refreshMenuItems() }
+                    }
+                }
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
