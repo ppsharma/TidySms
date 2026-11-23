@@ -127,9 +127,11 @@ import org.fossify.messages.extensions.filterNotInByKey
 import org.fossify.messages.extensions.getAddresses
 import org.fossify.messages.extensions.getDefaultKeyboardHeight
 import org.fossify.messages.extensions.getFileSizeFromUri
+import org.fossify.messages.extensions.getConversations
 import org.fossify.messages.extensions.getMessages
 import org.fossify.messages.extensions.getSmsDraft
 import org.fossify.messages.extensions.getThreadId
+import org.fossify.messages.extensions.insertOrUpdateConversation
 import org.fossify.messages.extensions.getThreadParticipants
 import org.fossify.messages.extensions.getThreadTitle
 import org.fossify.messages.extensions.indexOfFirstOrNull
@@ -471,6 +473,9 @@ class ThreadActivity : SimpleActivity() {
             // Load conversation and messages in one background task to avoid a title race.
             conversation = try {
                 conversationsDB.getConversationWithThreadId(threadId)
+                    ?: getConversations(threadId).firstOrNull()?.also {
+                        insertOrUpdateConversation(it)
+                    }
             } catch (_: Exception) {
                 null
             }
